@@ -22,6 +22,6 @@ class App:
 
 
 if __name__ == "__main__":
-    # database.init_db()
+    # db.init_db()
     app = App()
     app.main()

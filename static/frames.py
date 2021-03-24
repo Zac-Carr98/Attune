@@ -225,7 +225,6 @@ class SkillsCard(LevelTwoCard):
             'Stealth': ['stealth', 'dexterity'],
             'Survival': ['survival', 'wisdom']}
 
-
     # this function is deprecated and should be removed after testing
     def pair_factory(self):
         for key, values in self.DICT.items():
@@ -348,71 +347,42 @@ class TopCombatCard(LevelTwoCard):
 # the main widget is MiscItem Selection
 class MiscFeaturesCard(LevelTwoCard):
     DICT = {'Personality Traits': 'personality',
-            # 'Ideals': 'ideals',
+            'Ideals': 'ideals',
             'Add': 'add',
-            'Display': 'display'}
+            'Display': 'display',
+            'New Item': 'new_item',
+           }
 
     def create_widgets(self, key, values):
         if values == 'personality':
             return MiscButton(self, text=key, command=lambda: self.change_list(values))
-        elif values == 'add':
+        elif values == 'ideals':
             return MiscButton(self, text=key, command=lambda: self.change_list(values))
+        elif values == 'add':
+            return MiscButton(self, text=key, command=self.show_add)
+        elif values == 'new_item':
+            return AddItem(self, label_text='New Item', attr=None)
         elif values == 'display':
             return MiscItemsSelection(self, label_text='Misc Display', attr=None)
 
     def grid_items(self):
-        self.widgets[2].change_list('personality')
+        self.widgets[3].change_list('personality')
 
         self.inner_grid()
 
-        self.widgets[0].grid(row=0, column=0)
-        self.widgets[2].grid(row=0, column=1)
+        self.widgets[0].grid(row=0, column=0, sticky=tk.N)
+        self.widgets[1].grid(row=1, column=0, sticky=tk.N)
+        self.widgets[2].grid(row=2, column=0, sticky=tk.N)
+        self.widgets[3].grid(row=0, column=1, rowspan=5)
+        self.widgets[5].grid(row=3, column=0, sticky=tk.N)
 
     # this function changes the current displayed list of items
     # to match the clicked button
     def change_list(self, list_type, evt=None):
-        self.widgets[2].change_list(list_type)
+        self.widgets[4].grid_forget()
+        self.widgets[3].grid(row=0, column=1, rowspan=5)
+        self.widgets[3].change_list(list_type)
 
-    def add(self):
-        self.widgets[2].add()
-
-
-# this is a card only appearing on the associated popout window
-# it controls all of the windows functions
-# users can enter a name and description, along with an item type, and then
-# choose to save the new item to character, or close without saving
-class AddMiscItem(LevelTwoCard):
-    DICT = {'Name': 'name',
-            'Description': 'desc',
-            'Add Item': 'add',
-            'Close': 'close'}
-
-    def create_widgets(self, key, values):
-        if values == 'name':
-            return MiscItemPair(self, label_text=key, attr=values, entry_type=TextEntry)
-        elif values == 'desc':
-            return MiscItemPair(self, label_text='Description', attr='description',
-                                entry_type=CustomTextbox, style='textbox')
-        elif values == 'add':
-            return MiscButton(self, text=key, command=lambda: self.close('add'))
-        elif values == 'close':
-            return MiscButton(self, text=key, command=lambda: self.close('close'))
-
-    def grid_items(self):
-        pass
-
-    def close(self, close_evt):
-        pass
-
-    
-class PopOutWindow(ABC, tk.Toplevel):
-    def __init__(self, parent, title, *args, **kwargs):
-        tk.Toplevel.__init__(self, parent, *args, **kwargs)
-        self.title(title)
-
-
-class AddMiscItemWindow(PopOutWindow):
-    def __init__(self, parent, title, *args, **kwargs):
-        PopOutWindow.__init__(self, title, parent, *args, **kwargs)
-
-        self.inner_frame = LevelTwoCard(self, 'Add New Item')
+    def show_add(self):
+        self.widgets[3].grid_forget()
+        self.widgets[4].grid(row=0, column=1, rowspan=5)

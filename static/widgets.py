@@ -231,6 +231,9 @@ class MiscItemPair(LabelEntryPair):
     def get_entry(self):
         return self.entry.get_entry()
 
+    def reset(self):
+        self.entry.reset()
+
     def save(self):
         pass
 
@@ -299,8 +302,10 @@ class MiscItemsSelection(CustomHolderFrame):
         self.name_pair = MiscItemPair(self, label_text='Name', attr='name', entry_type=TextEntry)
         self.desc_pair = MiscItemPair(self, label_text='Description', attr='description',
                                       entry_type=CustomTextbox, style='textbox')
-        self.list_box = MiscListbox(self)
 
+
+        self.type_drop = None
+        self.list_box = MiscListbox(self)
         self.list_box.bind("<<ListboxSelect>>", self.load_item)
 
         self.item = None
@@ -319,8 +324,9 @@ class MiscItemsSelection(CustomHolderFrame):
         self.name_pair.grid_items()
         self.desc_pair.grid_items()
 
-        self.name_pair.grid(row=1, column=1, sticky=tk.E)
-        self.desc_pair.grid(row=2, column=1, sticky=tk.E)
+        self.name_pair.grid(row=1, column=1, sticky=tk.W)
+        # self.type_drop.grid(row=1, column=1, sticky=tk.W)
+        self.desc_pair.grid(row=2, column=1, sticky=tk.E, columnspan=3)
         self.list_box.grid(row=1, column=0, sticky=tk.E, rowspan=2)
 
     def change_list(self, list_type):
@@ -337,3 +343,40 @@ class MiscItemsSelection(CustomHolderFrame):
             self.item['name'] = self.name_pair.get_entry()
             self.item['description'] = self.desc_pair.get_entry()
             character.misc_items.update(self.item)
+
+
+class AddItem(CustomHolderFrame):
+    def __init__(self, parent, attr, label_text, *args, **kwargs):
+        CustomHolderFrame.__init__(self, parent, *args, **kwargs)
+
+        self.name_pair = MiscItemPair(self, label_text='Name', attr='name', entry_type=TextEntry)
+        self.desc_pair = MiscItemPair(self, label_text='Description', attr='description',
+                                      entry_type=CustomTextbox, style='textbox')
+        self.add_button = MiscButton(self, text='Save Item', command=self.add_item)
+
+        self.options = ['personality', 'ideals', 'bonds', 'flaws']
+        self.drop_var = tk.StringVar()
+        self.drop_var.set("personality") # default choice
+        self.drop_menu = tk.OptionMenu(self, self.drop_var, *self.options)
+
+    def add_item(self):
+        character.misc_items.add_item(self.name_pair.get_entry(), self.desc_pair.get_entry(), self.drop_var.get())
+        self.reset()
+
+    def grid_items(self):
+        self.name_pair.grid_items()
+        self.desc_pair.grid_items()
+
+        self.name_pair.grid(row=1, column=1, sticky=tk.W)
+        self.desc_pair.grid(row=2, column=1, sticky=tk.E, columnspan=3)
+        self.add_button.grid(row=1, column=3, sticky=tk.E)
+        self.drop_menu.grid(row=1, column=2, sticky=tk.E)
+
+    def reset(self):
+        self.name_pair.reset()
+        self.desc_pair.reset()
+        self.drop_var.set("personality")
+
+    def save(self):
+        pass
+

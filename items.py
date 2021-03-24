@@ -56,7 +56,6 @@ class MiscItems(Items):
                 self.items_list[index] = item
 
     def save(self):
-        print(f'Misc Items In List: {self.items_list}')
         for item in self.items_list:
             if item['id'] == 0:
                 db.insert_misc_item(item)
