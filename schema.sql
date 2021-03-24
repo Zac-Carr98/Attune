@@ -1,0 +1,177 @@
+DROP TABLE IF EXISTS character;
+DROP TABLE IF EXISTS misc;
+DROP TABLE IF EXISTS feature;
+DROP TABLE IF EXISTS personality;
+DROP TABLE IF EXISTS proficiency;
+DROP TABLE IF EXISTS language;
+DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS weapon;
+DROP TABLE IF EXISTS spell;
+
+CREATE TABLE character (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+name TEXT NOT NULL,
+race TEXT DEFAULT '',
+class_level TEXT DEFAULT '',
+background TEXT DEFAULT '',
+alignment TEXT DEFAULT '',
+player TEXT DEFAULT '',
+strength INTEGER DEFAULT 0,
+dexterity INTEGER DEFAULT 0,
+constitution INTEGER DEFAULT 0,
+intelligence INTEGER DEFAULT 0,
+wisdom INTEGER DEFAULT 0,
+charisma INTEGER DEFAULT 0,
+strength_throw INTEGER DEFAULT 0,
+dexterity_throw INTEGER DEFAULT 0,
+constitution_throw INTEGER DEFAULT 0,
+intelligence_throw INTEGER DEFAULT 0,
+wisdom_throw INTEGER DEFAULT 0,
+charisma_throw INTEGER DEFAULT 0,
+armor_class INTEGER DEFAULT 0,
+speed INTEGER DEFAULT 0,
+hp_maximum INTEGER DEFAULT 0,
+current_hp INTEGER DEFAULT 0,
+temporary_hp INTEGER DEFAULT 0,
+acrobatics INTEGER DEFAULT 0,
+animal INTEGER DEFAULT 0,
+arcana INTEGER DEFAULT 0,
+athletics INTEGER DEFAULT 0,
+deception INTEGER DEFAULT 0,
+history INTEGER DEFAULT 0,
+insight INTEGER DEFAULT 0,
+intimidation INTEGER DEFAULT 0,
+investigation INTEGER DEFAULT 0,
+medicine INTEGER DEFAULT 0,
+nature INTEGER DEFAULT 0,
+perception INTEGER DEFAULT 0,
+performance INTEGER DEFAULT 0,
+persuasion INTEGER DEFAULT 0,
+religion INTEGER DEFAULT 0,
+sleight INTEGER DEFAULT 0,
+stealth INTEGER DEFAULT 0,
+survival INTEGER DEFAULT 0,
+initiative INTEGER DEFAULT 0,
+proficiency INTEGER DEFAULT 0,
+one_max INTEGER DEFAULT 0,
+two_max INTEGER DEFAULT 0,
+three_max INTEGER DEFAULT 0,
+four_max INTEGER DEFAULT 0,
+five_max INTEGER DEFAULT 0,
+six_max INTEGER DEFAULT 0,
+seven_max INTEGER DEFAULT 0,
+eight_max INTEGER DEFAULT 0,
+nine_max INTEGER DEFAULT 0,
+one_used INTEGER DEFAULT 0,
+two_used INTEGER DEFAULT 0,
+three_used INTEGER DEFAULT 0,
+four_used INTEGER DEFAULT 0,
+five_used INTEGER DEFAULT 0,
+six_used INTEGER DEFAULT 0,
+seven_used INTEGER DEFAULT 0,
+eight_used INTEGER DEFAULT 0,
+nine_used INTEGER DEFAULT 0,
+experience TEXT DEFAULT '',
+inspiration TEXT DEFAULT '',
+casting_class TEXT DEFAULT '',
+casting_ability TEXT DEFAULT '',
+spell_save_dc TEXT DEFAULT '',
+spell_atk_bonus TEXT DEFAULT '',
+cp INTEGER DEFAULT 0,
+sp INTEGER DEFAULT 0,
+ep INTEGER DEFAULT 0,
+gp INTEGER DEFAULT 0,
+pp INTEGER DEFAULT 0,
+total_dice INTEGER DEFAULT 0,
+current_dice INTEGER DEFAULT 0,
+success_throws INTEGER DEFAULT 0,
+fail_throws INTEGER DEFAULT 0
+);
+
+CREATE TABLE misc (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+description TEXT DEFAULT '',
+type TEXT NOT NULL,
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE);
+
+
+CREATE TABLE feature (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL UNIQUE,
+description TEXT DEFAULT '',
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE);
+
+
+CREATE TABLE personality (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+description TEXT DEFAULT '',
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
+
+CREATE TABLE proficiency (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+description TEXT DEFAULT '',
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
+
+CREATE TABLE language (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+description TEXT DEFAULT '',
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
+
+CREATE TABLE inventory (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+description TEXT DEFAULT '',
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
+
+CREATE TABLE weapon (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+atk_bns TEXT DEFAULT '',
+damage TEXT DEFAULT '',
+description TEXT DEFAULT '',
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
+
+CREATE TABLE spell (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+level TEXT DEFAULT '',
+casting_time TEXT DEFAULT '',
+range TEXT DEFAULT '',
+components TEXT DEFAULT '',
+duration TEXT DEFAULT '',
+description TEXT DEFAULT '',
+school TEXT DEFAULT '',
+character_id INTEGER NOT NULL,
+FOREIGN KEY (character_id) REFERENCES character (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE)
