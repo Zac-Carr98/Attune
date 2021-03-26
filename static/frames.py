@@ -374,7 +374,7 @@ class MiscFeaturesCard(LevelTwoCard):
         self.widgets[1].grid(row=1, column=0, sticky=tk.N)
         self.widgets[2].grid(row=2, column=0, sticky=tk.N)
         self.widgets[3].grid(row=0, column=1, rowspan=5)
-        self.widgets[5].grid(row=3, column=0, sticky=tk.N)
+        # self.widgets[5].grid(row=3, column=0, sticky=tk.N)
 
     # this function changes the current displayed list of items
     # to match the clicked button
