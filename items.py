@@ -55,6 +55,12 @@ class MiscItems(Items):
             if unchanged_item['id'] == item['id']:
                 self.items_list[index] = item
 
+    def delete(self, item_id):
+        for i in range(len(self.items_list)):
+            if self.items_list[i]['id'] == item_id:
+                db.delete_misc_item(self.items_list[i]['id'])
+                del self.items_list[i]
+
     def save(self):
         for item in self.items_list:
             if item['id'] == 0:

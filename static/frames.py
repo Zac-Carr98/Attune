@@ -41,7 +41,7 @@ class BasicInfoCard(LevelOneCard):
         self.skill_card = SkillsCard(self, 'Skills')
         self.gold_card = GoldCard(self, 'Gold')
 
-        self.misc_features_card = MiscFeaturesCard(self, 'Features')
+        self.misc_features_card = MiscItemsMenuCard(self, 'Features')
 
         self.widgets.append(self.misc_card)
         self.widgets.append(self.abilities_card)
@@ -386,3 +386,36 @@ class MiscFeaturesCard(LevelTwoCard):
     def show_add(self):
         self.widgets[3].grid_forget()
         self.widgets[4].grid(row=0, column=1, rowspan=5)
+
+
+class MiscItemsMenuCard(LevelTwoCard):
+    DICT = {'Button Holder': 'button_holder',
+            'List_Box': 'list_box',
+            'Personality Traits': 'personality',
+            'Ideals': 'ideals',
+            'Bonds': 'bonds',
+            'Flaws': 'flaws',
+            'Features': 'features'
+            }
+
+    def create_widgets(self, key, values):
+        if values == 'list_box':
+            return MiscListbox(self)
+        elif values == 'button_holder':
+            return MiscButtonHolder(self)
+        else:
+            return MiscButton(self.widgets[0], text=key, command=lambda: self.change_list(values))
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.widgets[0].grid(row=0, column=0)
+        self.widgets[1].grid(row=0, column=1)
+        self.widgets[2].grid(row=0, column=0, sticky=tk.N+tk.EW)
+        self.widgets[3].grid(row=1, column=0, sticky=tk.N+tk.EW)
+        self.widgets[4].grid(row=2, column=0, sticky=tk.N+tk.EW)
+        self.widgets[5].grid(row=3, column=0, sticky=tk.N+tk.EW)
+        self.widgets[6].grid(row=4, column=0, sticky=tk.N+tk.EW)
+
+    def change_list(self, list_type):
+        self.widgets[1].change_list(list_type)

@@ -90,3 +90,12 @@ def update_misc_item(item):
         f'UPDATE misc SET name=?, description=? WHERE id=?', (item['name'], item['description'], item['id'])
     )
     db.commit()
+
+
+def delete_misc_item(item_id):
+    db = get_db()
+
+    db.execute(
+        f'DELETE FROM misc WHERE id=?', (item_id,)
+    )
+    db.commit()

@@ -12,7 +12,7 @@ class Character:
         self.spells = []
 
         self.misc_items = items.MiscItems('misc', self.id)
-        # self.test_add_item()
+        self.test_add_item()
 
     def get_single_attr(self, attr):
         return getattr(self, attr)
