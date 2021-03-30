@@ -5,10 +5,44 @@ from static.settings import *
 import static_functions as sf
 
 
+class FrameTemplate(ABC):
+    DICT = {}
+
+    def __init__(self, *args, **kwargs):
+
+        self.widgets = []
+        self.entries = []
+
+        self.widget_factory()
+
+    @abstractmethod
+    def grid_items(self):
+        pass
+
+    # this runs through any given cards dicts and creates the
+    # widgets as defined on the card in "create_widgets" function
+    def widget_factory(self):
+        for key, values in self.DICT.items():
+            self.widgets.append(self.create_widgets(key, values))
+
+    @abstractmethod
+    def create_widgets(self, key, values):
+        pass
+
+    def inner_grid(self):
+        for widget in self.widgets:
+            widget.grid_items()
+
+    def save(self):
+        for widget in self.widgets:
+            widget.save()
+
+
 class CustomHolderFrame(ABC, tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
 
+        self.item = None
         self.widgets = []
 
     @abstractmethod
@@ -244,11 +278,9 @@ class CustomButton(ABC, tk.Button):
     def __init__(self, parent, *args, **kwargs):
         tk.Button.__init__(self, parent, *args, **kwargs)
 
-    @abstractmethod
     def grid_items(self):
         pass
 
-    @abstractmethod
     def save(self):
         pass
 
@@ -257,20 +289,14 @@ class MiscButton(CustomButton):
     def __init__(self, parent, *args, **kwargs):
         CustomButton.__init__(self, parent, *args, **kwargs)
 
-    def grid_items(self):
-        pass
-
-    def save(self):
-        pass
-
 
 class CustomListbox(ABC, tk.Listbox):
     def __init__(self, parent, *args, **kwargs):
         tk.Listbox.__init__(self, parent, *args, **kwargs)
 
-    def set_list(self, item_name_list):
-        for name in reversed(item_name_list):
-            self.insert(0, name)
+    @abstractmethod
+    def set_list(self, item_list):
+        pass
 
     def get_selection(self):
         return self.get(self.curselection()[0])
@@ -290,137 +316,13 @@ class MiscListbox(CustomListbox):
         CustomListbox.__init__(self, parent, *args, **kwargs)
         self.config(width=20, height=12, font=(None, 14))
 
-        self.bind("<<ListboxSelect>>", self.open_item)
+    def set_list(self, item_list):
+        for item in reversed(item_list):
+            self.insert(0, item['name'])
 
     def change_list(self, list_type):
         self.clear()
-        self.set_list(item_name_list=character.misc_type_list(list_type))
-
-    def open_item(self, evt=None):
-        pass
-
-    def grid_items(self):
-        pass
-
-    def save(self):
-        pass
-
-
-class MiscItemsSelection(CustomHolderFrame):
-    def __init__(self, parent, attr, label_text, *args, **kwargs):
-        CustomHolderFrame.__init__(self, parent, *args, **kwargs)
-
-        self.name_pair = MiscItemPair(self, label_text='Name', attr='name', entry_type=TextEntry)
-        self.desc_pair = MiscItemPair(self, label_text='Description', attr='description',
-                                      entry_type=CustomTextbox, style='textbox')
-        self.delete_btn = MiscButton(self, text='Delete', command=self.delete)
-        self.save_btn = MiscButton(self, text='Save', command=self.save)
-
-        self.type_drop = None
-        self.list_box = MiscListbox(self)
-        self.list_box.bind("<<ListboxSelect>>", self.load_item)
-
-        self.item = None
-        self.list_type = None
-
-    # loads an item from character.misc_items by taking the selection from the listbox
-    # then clears the stat block for the item, and replaces it with appropriate info
-    def load_item(self, evt=None):
-        selection = self.list_box.get_selection()
-        self.item = character.misc_items.get_item(selection)
-        self.name_pair.set_entry(self.item['name'])
-        self.desc_pair.set_entry(self.item['description'])
-
-    def grid_items(self):
-        self.name_pair.grid_items()
-        self.desc_pair.grid_items()
-
-        self.name_pair.grid(row=1, column=1, sticky=tk.W)
-        self.save_btn.grid(row=1, column=2)
-        self.delete_btn.grid(row=1, column=3)
-        self.desc_pair.grid(row=2, column=1, sticky=tk.E, columnspan=3)
-        self.list_box.grid(row=1, column=0, sticky=tk.E, rowspan=2)
-
-    # changes list type, loads the new list, and then loads the first item of the list by default
-    def change_list(self, list_type):
-        self.list_type = list_type
-        self.load_list()
-        self.load_default()
-
-    # clears listbox and then replaces it with a refreshed version with current list type
-    def load_list(self):
-        self.list_box.clear()
-        self.list_box.set_list(item_name_list=character.misc_type_list(self.list_type))
-
-    # chooses the first item in list and displays it
-    def load_default(self):
-        self.list_box.select_set(0)  # This only sets focus on the first item.
-        self.list_box.event_generate("<<ListboxSelect>>")
-
-    def delete(self):
-        character.misc_items.delete(self.item['id'])
-        self.load_list()
-
-    def save(self):
-        if self.item:
-            self.item['name'] = self.name_pair.get_entry()
-            self.item['description'] = self.desc_pair.get_entry()
-            character.misc_items.update(self.item)
-            self.load_list()
-
-
-class AddItem(CustomHolderFrame):
-    def __init__(self, parent, attr, label_text, *args, **kwargs):
-        CustomHolderFrame.__init__(self, parent, *args, **kwargs)
-
-        self.name_pair = MiscItemPair(self, label_text='Name', attr='name', entry_type=TextEntry)
-        self.desc_pair = MiscItemPair(self, label_text='Description', attr='description',
-                                      entry_type=CustomTextbox, style='textbox')
-        self.add_button = MiscButton(self, text='Save Item', command=self.add_item)
-
-        self.options = ['personality', 'ideals', 'bonds', 'flaws']
-        self.drop_var = tk.StringVar()
-        self.drop_var.set("personality") # default choice
-        self.drop_menu = tk.OptionMenu(self, self.drop_var, *self.options)
-
-    def add_item(self):
-        character.misc_items.add_item(self.name_pair.get_entry(), self.desc_pair.get_entry(), self.drop_var.get())
-        self.reset()
-
-    def grid_items(self):
-        self.name_pair.grid_items()
-        self.desc_pair.grid_items()
-
-        self.name_pair.grid(row=1, column=1, sticky=tk.W)
-        self.desc_pair.grid(row=2, column=1, sticky=tk.E, columnspan=3)
-        self.add_button.grid(row=1, column=3, sticky=tk.E)
-        self.drop_menu.grid(row=1, column=2, sticky=tk.E)
-
-    def reset(self):
-        self.name_pair.reset()
-        self.desc_pair.reset()
-        self.drop_var.set("personality")
-
-    def save(self):
-        pass
-
-
-class MiscItemsMenu(CustomHolderFrame):
-    def __init__(self, parent, attr, label_text, *args, **kwargs):
-        CustomHolderFrame.__init__(self, parent, *args, **kwargs)
-    # I need an object where the buttons can interact with the list box, this can be done by organizing the buttons
-    # with in an inner object holder but creating them as objects of the outer frame. When the buttons are pressed, the
-    # listbox list will change appropriately, and the buttons will stay pressed.
-    # The list of items in the listbox will be double clickable and will open a
-    # pop out window that will actually display the item.
-    # There will only be one window open at any given time.
-    # Any attempts to open a new item will simply change the item displayed in the current window.
-
-    def grid_items(self):
-        pass
-
-    def save(self):
-        pass
+        self.set_list(item_list=character.misc_type_list(list_type))
 
 
 class MiscButtonHolder(CustomHolderFrame):
@@ -429,3 +331,40 @@ class MiscButtonHolder(CustomHolderFrame):
 
     def grid_items(self):
         pass
+
+
+class MiscItemDisplay(FrameTemplate, tk.Frame):
+    DICT = {'Name': 'name',
+            'Description': 'desc',
+            'Save Changes': 'save_btn'}
+
+    def __init__(self, parent, item, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        FrameTemplate.__init__(self, *args, **kwargs)
+        self.item = item
+
+        self.set_widgets()
+
+    def create_widgets(self, key, values):
+        if values == 'name':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'desc':
+            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
+        elif values == 'save_btn':
+            return MiscButton(self, text=key, command=self.save)
+
+    def set_widgets(self):
+        self.widgets[0].set_entry(self.item['name'])
+        self.widgets[1].set_entry(self.item['description'])
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
+        self.widgets[1].grid(row=1, column=0, columnspan=2)
+        self.widgets[2].grid(row=0, column=1)
+
+    def save(self):
+        self.item['name'] = self.widgets[0].get_entry()
+        self.item['description'] = self.widgets[1].get_entry()
+        character.misc_items.update(self.item)

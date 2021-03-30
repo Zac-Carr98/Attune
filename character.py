@@ -12,7 +12,8 @@ class Character:
         self.spells = []
 
         self.misc_items = items.MiscItems('misc', self.id)
-        self.test_add_item()
+        self.open_item = False
+        # self.test_add_item()
 
     def get_single_attr(self, attr):
         return getattr(self, attr)
@@ -21,7 +22,7 @@ class Character:
         db.save_character_attr(attr, value, self.id)
 
     def misc_type_list(self, list_type):
-        return self.misc_items.get_item_name_list(list_type)
+        return self.misc_items.get_item_list(list_type)
 
     def test_add_item(self):
         self.misc_items.add_item(name='Coward',

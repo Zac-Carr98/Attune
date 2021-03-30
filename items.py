@@ -9,7 +9,7 @@ class Items(ABC):
         self.char_id = char_id
 
     @abstractmethod
-    def get_item_name_list(self, *args):
+    def get_item_list(self, *args):
         pass
 
     @abstractmethod
@@ -35,14 +35,14 @@ class Items(ABC):
 
 class MiscItems(Items):
 
-    def get_item_name_list(self, list_type):
-        item_name_list = []
+    def get_item_list(self, list_type):
+        item_list = []
 
         for item in self.items_list:
             if item['type'] == list_type:
-                item_name_list.append(item['name'])
+                item_list.append(item)
 
-        return item_name_list
+        return item_list
 
     def add_item(self, name, description, list_type):
         if self.check_name(name):

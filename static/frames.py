@@ -10,11 +10,11 @@ class LevelOneCard(ABC, tk.LabelFrame):
     def __init__(self, parent, title, *args, **kwargs):
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
 
+
         self.frame_label = tk.Label(self, text=title, font=(None, 20))
 
         self.widgets = []
         self.entries = []
-        # self.config(bg=LEVELONE)
 
     @abstractmethod
     def grid_items(self):
@@ -88,40 +88,14 @@ class BasicCombatCard(LevelOneCard):
 
 # Card (frame) where all information is displayed.
 # inner widgets hold most logic relating to backend
-class LevelTwoCard(ABC, tk.LabelFrame):
+class LevelTwoCard(tk.LabelFrame, FrameTemplate, ABC):
     DICT = {}
 
     def __init__(self, parent, title, *args, **kwargs):
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
+        FrameTemplate.__init__(self, *args, **kwargs)
 
         self.frame_label = tk.Label(self, text=title, font=(None, 17))
-
-        self.widgets = []
-        self.entries = []
-
-        self.widget_factory()
-
-    @abstractmethod
-    def grid_items(self):
-        pass
-
-    # this runs through any given cards dicts and creates the
-    # widgets as defined on the card in "create_widgets" function
-    def widget_factory(self):
-        for key, values in self.DICT.items():
-            self.widgets.append(self.create_widgets(key, values))
-
-    @abstractmethod
-    def create_widgets(self, key, values):
-        pass
-
-    def inner_grid(self):
-        for widget in self.widgets:
-            widget.grid_items()
-
-    def save(self):
-        for widget in self.widgets:
-            widget.save()
 
 
 # this card displays all info relating to the character at a surface level
@@ -400,7 +374,9 @@ class MiscItemsMenuCard(LevelTwoCard):
 
     def create_widgets(self, key, values):
         if values == 'list_box':
-            return MiscListbox(self)
+            listbox = MiscListbox(self)
+            listbox.bind("<<ListboxSelect>>", lambda event: self.open_item(listbox.get_selection()))
+            return listbox
         elif values == 'button_holder':
             return MiscButtonHolder(self)
         else:
@@ -418,4 +394,45 @@ class MiscItemsMenuCard(LevelTwoCard):
         self.widgets[6].grid(row=4, column=0, sticky=tk.N+tk.EW)
 
     def change_list(self, list_type):
+        self.entries = list_type
         self.widgets[1].change_list(list_type)
+
+    def refresh(self):
+        self.widgets[1].change_list(self.entries)
+
+    def open_item(self, selection):
+        if not character.open_item:
+            MiscItemWindow(self, selection)
+            character.open_item = True
+
+
+class MiscItemWindow(FrameTemplate, tk.Toplevel):
+    DICT = {'Display': 'display'}
+
+    def __init__(self, parent, title, *args, **kwargs):
+        self.item = character.misc_items.get_item(title)
+        tk.Toplevel.__init__(self, parent, *args, **kwargs)
+        self.title(title)
+        FrameTemplate.__init__(self, *args, **kwargs)
+        self.protocol("WM_DELETE_WINDOW", self.on_exit)
+        self.parent = parent
+        self.grid_items()
+
+    def create_widgets(self, key, values):
+        if values == 'display':
+            return MiscItemDisplay(self, self.item)
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.widgets[0].grid(row=0, column=0)
+
+    def save(self):
+        pass
+
+    def on_exit(self):
+        character.open_item = False
+        self.parent.refresh()
+        self.destroy()
+
+
