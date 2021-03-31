@@ -60,6 +60,7 @@ class MiscItems(Items):
             if self.items_list[i]['id'] == item_id:
                 db.delete_misc_item(self.items_list[i]['id'])
                 del self.items_list[i]
+                break
 
     def save(self):
         for item in self.items_list:

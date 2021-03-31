@@ -10,7 +10,6 @@ class LevelOneCard(ABC, tk.LabelFrame):
     def __init__(self, parent, title, *args, **kwargs):
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
 
-
         self.frame_label = tk.Label(self, text=title, font=(None, 20))
 
         self.widgets = []
@@ -316,60 +315,18 @@ class TopCombatCard(LevelTwoCard):
         self.widgets[2].grid(row=1, column=2, sticky=tk.E)
 
 
-# this card is more complicated than the others
-# it saves Misc items for the character, listed in the dict,
-# the main widget is MiscItem Selection
-class MiscFeaturesCard(LevelTwoCard):
-    DICT = {'Personality Traits': 'personality',
-            'Ideals': 'ideals',
-            'Add': 'add',
-            'Display': 'display',
-            'New Item': 'new_item',
-           }
-
-    def create_widgets(self, key, values):
-        if values == 'personality':
-            return MiscButton(self, text=key, command=lambda: self.change_list(values))
-        elif values == 'ideals':
-            return MiscButton(self, text=key, command=lambda: self.change_list(values))
-        elif values == 'add':
-            return MiscButton(self, text=key, command=self.show_add)
-        elif values == 'new_item':
-            return AddItem(self, label_text='New Item', attr=None)
-        elif values == 'display':
-            return MiscItemsSelection(self, label_text='Misc Display', attr=None)
-
-    def grid_items(self):
-        self.widgets[3].change_list('personality')
-
-        self.inner_grid()
-
-        self.widgets[0].grid(row=0, column=0, sticky=tk.N)
-        self.widgets[1].grid(row=1, column=0, sticky=tk.N)
-        self.widgets[2].grid(row=2, column=0, sticky=tk.N)
-        self.widgets[3].grid(row=0, column=1, rowspan=5)
-        # self.widgets[5].grid(row=3, column=0, sticky=tk.N)
-
-    # this function changes the current displayed list of items
-    # to match the clicked button
-    def change_list(self, list_type, evt=None):
-        self.widgets[4].grid_forget()
-        self.widgets[3].grid(row=0, column=1, rowspan=5)
-        self.widgets[3].change_list(list_type)
-
-    def show_add(self):
-        self.widgets[3].grid_forget()
-        self.widgets[4].grid(row=0, column=1, rowspan=5)
-
-
 class MiscItemsMenuCard(LevelTwoCard):
     DICT = {'Button Holder': 'button_holder',
             'List_Box': 'list_box',
-            'Personality Traits': 'personality',
-            'Ideals': 'ideals',
-            'Bonds': 'bonds',
-            'Flaws': 'flaws',
-            'Features': 'features'
+            'Personality Traits': ['personality', 2],
+            'Ideals': ['ideals', 3],
+            'Bonds': ['bonds', 4],
+            'Flaws': ['flaws', 5],
+            'Features': ['features', 6],
+            'Equipment': ['equipment', 7],
+            'Proficiencies': ['other_prof', 8],
+            'Languages': ['languages', 9],
+            'Add': 'add',
             }
 
     def create_widgets(self, key, values):
@@ -379,11 +336,17 @@ class MiscItemsMenuCard(LevelTwoCard):
             return listbox
         elif values == 'button_holder':
             return MiscButtonHolder(self)
+        elif values == 'add':
+            return MiscButton(self.widgets[0], text=key, command=self.add_item)
         else:
-            return MiscButton(self.widgets[0], text=key, command=lambda: self.change_list(values))
+            return MiscButton(self.widgets[0], text=key, command=lambda: self.change_list(values[0], values[1]))
 
     def grid_items(self):
         self.inner_grid()
+
+        self.entries.append(None)
+        self.entries.append(None)
+        self.change_list('personality', 2)
 
         self.widgets[0].grid(row=0, column=0)
         self.widgets[1].grid(row=0, column=1)
@@ -392,47 +355,69 @@ class MiscItemsMenuCard(LevelTwoCard):
         self.widgets[4].grid(row=2, column=0, sticky=tk.N+tk.EW)
         self.widgets[5].grid(row=3, column=0, sticky=tk.N+tk.EW)
         self.widgets[6].grid(row=4, column=0, sticky=tk.N+tk.EW)
+        self.widgets[7].grid(row=5, column=0, sticky=tk.N+tk.EW)
+        self.widgets[8].grid(row=6, column=0, sticky=tk.N+tk.EW)
+        self.widgets[9].grid(row=7, column=0, sticky=tk.N+tk.EW)
+        self.widgets[10].grid(row=8, column=0, sticky=tk.N+tk.EW)
 
-    def change_list(self, list_type):
-        self.entries = list_type
+    def change_list(self, list_type, btn):
+        self.entries[0] = list_type
+        self.change_btn(btn)
         self.widgets[1].change_list(list_type)
 
+    def change_btn(self, btn):
+        if self.entries[1]:
+            self.entries[1].release()
+        self.entries[1] = self.widgets[btn]
+        self.entries[1].pressed()
+
     def refresh(self):
-        self.widgets[1].change_list(self.entries)
+        self.widgets[1].change_list(self.entries[0])
 
     def open_item(self, selection):
         if not character.open_item:
             MiscItemWindow(self, selection)
             character.open_item = True
 
+    def add_item(self):
+        if not character.open_item:
+            MiscItemWindow(self, 'New Item', self.entries[0])
+            character.open_item = True
 
-class MiscItemWindow(FrameTemplate, tk.Toplevel):
-    DICT = {'Display': 'display'}
 
+class PopupWindow(FrameTemplate, tk.Toplevel, ABC):
     def __init__(self, parent, title, *args, **kwargs):
-        self.item = character.misc_items.get_item(title)
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
-        self.title(title)
-        FrameTemplate.__init__(self, *args, **kwargs)
         self.protocol("WM_DELETE_WINDOW", self.on_exit)
+        FrameTemplate.__init__(self, *args, **kwargs)
+        self.title(title)
         self.parent = parent
-        self.grid_items()
-
-    def create_widgets(self, key, values):
-        if values == 'display':
-            return MiscItemDisplay(self, self.item)
-
-    def grid_items(self):
-        self.inner_grid()
-
-        self.widgets[0].grid(row=0, column=0)
-
-    def save(self):
-        pass
 
     def on_exit(self):
         character.open_item = False
         self.parent.refresh()
         self.destroy()
 
+    def grid_items(self):
+        self.inner_grid()
+        self.widgets[0].grid(row=0, column=0)
 
+
+class MiscItemWindow(PopupWindow):
+    DICT = {'Display': 'display'}
+
+    def __init__(self, parent, title, list_type=None, *args, **kwargs):
+        self.title_string = title
+        if title == 'New Item':
+            self.item = list_type
+        else:
+            self.item = character.misc_items.get_item(title)
+        PopupWindow.__init__(self, parent, title, *args, **kwargs)
+
+        self.grid_items()
+
+    def create_widgets(self, key, values):
+        if self.title_string == 'New Item':
+            return MiscAddDisplay(self, self.item)
+        else:
+            return MiscItemDisplay(self, self.item)

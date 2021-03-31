@@ -289,6 +289,12 @@ class MiscButton(CustomButton):
     def __init__(self, parent, *args, **kwargs):
         CustomButton.__init__(self, parent, *args, **kwargs)
 
+    def pressed(self):
+        self.config(relief=tk.SUNKEN)
+
+    def release(self):
+        self.config(relief=tk.RAISED)
+
 
 class CustomListbox(ABC, tk.Listbox):
     def __init__(self, parent, *args, **kwargs):
@@ -336,12 +342,14 @@ class MiscButtonHolder(CustomHolderFrame):
 class MiscItemDisplay(FrameTemplate, tk.Frame):
     DICT = {'Name': 'name',
             'Description': 'desc',
-            'Save Changes': 'save_btn'}
+            'Save Changes': 'save_btn',
+            'Delete': 'delete'}
 
     def __init__(self, parent, item, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         FrameTemplate.__init__(self, *args, **kwargs)
         self.item = item
+        self.parent = parent
 
         self.set_widgets()
 
@@ -352,6 +360,8 @@ class MiscItemDisplay(FrameTemplate, tk.Frame):
             return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
         elif values == 'save_btn':
             return MiscButton(self, text=key, command=self.save)
+        elif values == 'delete':
+            return MiscButton(self, text=key, command=self.delete)
 
     def set_widgets(self):
         self.widgets[0].set_entry(self.item['name'])
@@ -361,10 +371,48 @@ class MiscItemDisplay(FrameTemplate, tk.Frame):
         self.inner_grid()
 
         self.widgets[0].grid(row=0, column=0, sticky=tk.W)
-        self.widgets[1].grid(row=1, column=0, columnspan=2)
+        self.widgets[1].grid(row=1, column=0, columnspan=3)
         self.widgets[2].grid(row=0, column=1)
+        self.widgets[3].grid(row=0, column=2)
 
     def save(self):
         self.item['name'] = self.widgets[0].get_entry()
         self.item['description'] = self.widgets[1].get_entry()
         character.misc_items.update(self.item)
+
+    def delete(self):
+        character.misc_items.delete(self.item['id'])
+        self.parent.on_exit()
+
+
+class MiscAddDisplay(FrameTemplate, tk.Frame):
+    DICT = {'Name': 'name',
+            'Description': 'desc',
+            'Save & Close': 'save_btn'}
+
+    def __init__(self, parent, list_type, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        FrameTemplate.__init__(self, *args, **kwargs)
+        self.parent = parent
+        self.list_type = list_type
+
+    def create_widgets(self, key, values):
+        if values == 'name':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'desc':
+            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
+        elif values == 'save_btn':
+            return MiscButton(self, text=key, command=self.save)
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
+        self.widgets[1].grid(row=1, column=0, columnspan=2)
+        self.widgets[2].grid(row=0, column=1)
+
+    def save(self):
+        character.misc_items.add_item(name=self.widgets[0].get_entry(),
+                                      description=self.widgets[1].get_entry(),
+                                      list_type=self.list_type)
+        self.parent.on_exit()

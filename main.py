@@ -8,8 +8,11 @@ class App:
     def __init__(self):
         self.root = tk.Tk()
         self.main_window = fe.MainWindow(self.root)
+        self.menu_bar = fe.Menubar(self.root)
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_exit)
+
+        self.root.config(menu=self.menu_bar)
 
     def main(self):
         self.main_window.grid(row=0, column=0)
