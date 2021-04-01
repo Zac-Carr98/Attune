@@ -2,20 +2,6 @@ import tkinter as tk
 from static import frames
 
 
-class Menubar(tk.Menu):
-    def __init__(self, parent, *args, **kwargs):
-        tk.Menu.__init__(self, parent, *args, **kwargs)
-
-        filemenu = tk.Menu(self, tearoff=0)
-        filemenu.add_command(label="New")
-        filemenu.add_command(label="Open")
-        filemenu.add_command(label="Save")
-        filemenu.add_command(label="Save as...")
-        filemenu.add_command(label="Close")
-
-        self.add_cascade(label="File", menu=filemenu)
-
-
 class MainWindow(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
