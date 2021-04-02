@@ -69,11 +69,13 @@ class BasicCombatCard(LevelOneCard):
         self.hp_card = HitPointsCard(self, 'Hit Points')
         self.hdice_card = HitDiceCard(self, 'Hit Dice')
         self.death_card = DeathSavesCard(self, 'Death Saves')
+        self.attacks_card = WeaponItemsMenu(self, 'Attacks')
 
         self.widgets.append(self.top_card)
         self.widgets.append(self.hp_card)
         self.widgets.append(self.hdice_card)
         self.widgets.append(self.death_card)
+        self.widgets.append(self.attacks_card)
 
     def grid_items(self):
         self.inner_grid()
@@ -83,6 +85,7 @@ class BasicCombatCard(LevelOneCard):
         self.hp_card.grid(row=2, column=0)
         self.hdice_card.grid(row=2, column=1)
         self.death_card.grid(row=2, column=2)
+        self.attacks_card.grid(row=3, column=0, columnspan=3)
 
 
 # Card (frame) where all information is displayed.
@@ -315,7 +318,32 @@ class TopCombatCard(LevelTwoCard):
         self.widgets[2].grid(row=1, column=2, sticky=tk.E)
 
 
-class MiscItemsMenuCard(LevelTwoCard):
+class SelectMenu(LevelTwoCard, ABC):
+
+    def change_list(self, list_type, btn):
+        self.entries[0] = list_type
+        self.change_btn(btn)
+        self.widgets[1].change_list(list_type)
+
+    def change_btn(self, btn):
+        if self.entries[1]:
+            self.entries[1].release()
+        self.entries[1] = self.widgets[btn]
+        self.entries[1].pressed()
+
+    @abstractmethod
+    def open_item(self, *args):
+        pass
+
+    @abstractmethod
+    def add_item(self):
+        pass
+
+    def refresh(self):
+        self.widgets[1].change_list(self.entries[0])
+
+
+class MiscItemsMenuCard(SelectMenu):
     DICT = {'Button Holder': 'button_holder',
             'List_Box': 'list_box',
             'Personality Traits': ['personality', 2],
@@ -335,7 +363,7 @@ class MiscItemsMenuCard(LevelTwoCard):
             listbox.bind("<<ListboxSelect>>", lambda event: self.open_item(listbox.get_selection()))
             return listbox
         elif values == 'button_holder':
-            return MiscButtonHolder(self)
+            return ButtonHolder(self)
         elif values == 'add':
             return MiscButton(self.widgets[0], text=key, command=self.add_item)
         else:
@@ -360,20 +388,6 @@ class MiscItemsMenuCard(LevelTwoCard):
         self.widgets[9].grid(row=7, column=0, sticky=tk.N+tk.EW)
         self.widgets[10].grid(row=8, column=0, sticky=tk.N+tk.EW)
 
-    def change_list(self, list_type, btn):
-        self.entries[0] = list_type
-        self.change_btn(btn)
-        self.widgets[1].change_list(list_type)
-
-    def change_btn(self, btn):
-        if self.entries[1]:
-            self.entries[1].release()
-        self.entries[1] = self.widgets[btn]
-        self.entries[1].pressed()
-
-    def refresh(self):
-        self.widgets[1].change_list(self.entries[0])
-
     def open_item(self, selection):
         if not character.open_item:
             MiscItemWindow(self, selection)
@@ -382,6 +396,50 @@ class MiscItemsMenuCard(LevelTwoCard):
     def add_item(self):
         if not character.open_item:
             MiscItemWindow(self, 'New Item', self.entries[0])
+            character.open_item = True
+
+
+class WeaponItemsMenu(SelectMenu):
+    DICT = {'Button Holder': 'button_holder',
+            'List_Box': 'list_box',
+            'Weapons': ['weapon', 2],
+            'Physical Attacks': ['non_weapon', 3],
+            'Add': 'add'
+            }
+
+    def create_widgets(self, key, values):
+        if values == 'list_box':
+            listbox = WeaponsListbox(self)
+            listbox.bind("<<ListboxSelect>>", lambda event: self.open_item(listbox.get_selection()))
+            return listbox
+        elif values == 'button_holder':
+            return ButtonHolder(self)
+        elif values == 'add':
+            return MiscButton(self.widgets[0], text=key, command=self.add_item)
+        else:
+            return MiscButton(self.widgets[0], text=key, command=lambda: self.change_list(values[0], values[1]))
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.entries.append(None)
+        self.entries.append(None)
+        self.change_list('weapon', 2)
+
+        self.widgets[0].grid(row=0, column=0)
+        self.widgets[1].grid(row=0, column=1)
+        self.widgets[2].grid(row=0, column=0, sticky=tk.N + tk.EW)
+        self.widgets[3].grid(row=1, column=0, sticky=tk.N + tk.EW)
+        self.widgets[4].grid(row=2, column=0, sticky=tk.N + tk.EW)
+
+    def open_item(self, selection):
+        if not character.open_item:
+            WeaponItemWindow(self, selection)
+            character.open_item = True
+
+    def add_item(self):
+        if not character.open_item:
+            WeaponItemWindow(self, 'New Item', self.entries[0])
             character.open_item = True
 
 
@@ -421,3 +479,23 @@ class MiscItemWindow(PopupWindow):
             return MiscAddDisplay(self, self.item)
         else:
             return MiscItemDisplay(self, self.item)
+
+
+class WeaponItemWindow(PopupWindow):
+    DICT = {'Display': 'display'}
+
+    def __init__(self, parent, title, list_type=None, *args, **kwargs):
+        self.title_string = title
+        if title == 'New Item':
+            self.item = list_type
+        else:
+            self.item = character.weapon_items.get_item(title)
+        PopupWindow.__init__(self, parent, title, *args, **kwargs)
+
+        self.grid_items()
+
+    def create_widgets(self, key, values):
+        if self.title_string == 'New Item':
+            return WeaponAddDisplay(self, self.item)
+        else:
+            return WeaponItemDisplay(self, self.item)

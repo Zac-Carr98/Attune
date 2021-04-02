@@ -83,6 +83,19 @@ def insert_misc_item(item):
     db.commit()
 
 
+def insert_weapon_item(item):
+
+    db = get_db()
+
+    db.execute(
+        f'INSERT INTO weapon (name, atk_bns, damage, description, type, character_id) '
+        f'VALUES (?, ?, ?, ?, ?, ?)', (item['name'], item['atk_bns'], item['damage'],
+                                 item['description'], item['type'], item['character_id'])
+    )
+
+    db.commit()
+
+
 def update_misc_item(item):
     db = get_db()
 
@@ -92,10 +105,21 @@ def update_misc_item(item):
     db.commit()
 
 
-def delete_misc_item(item_id):
+def update_weapon_item(item):
     db = get_db()
 
     db.execute(
-        f'DELETE FROM misc WHERE id=?', (item_id,)
+        f'UPDATE weapon SET name=?, atk_bns=?, damage=?, description=? WHERE id=?', (item['name'], item['atk_bns'],
+                                                                                   item['damage'], item['description'],
+                                                                                   item['id'])
+    )
+    db.commit()
+
+
+def delete_item(item_id, item_type):
+    db = get_db()
+
+    db.execute(
+        f'DELETE FROM {item_type} WHERE id=?', (item_id,)
     )
     db.commit()

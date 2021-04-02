@@ -27,6 +27,7 @@ class App:
     def save(self):
         self.main_window.save()
         ch.character.misc_items.save()
+        ch.character.weapon_items.save()
 
     def main(self):
         self.main_window.grid(row=0, column=0)

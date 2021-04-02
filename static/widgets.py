@@ -300,9 +300,9 @@ class CustomListbox(ABC, tk.Listbox):
     def __init__(self, parent, *args, **kwargs):
         tk.Listbox.__init__(self, parent, *args, **kwargs)
 
-    @abstractmethod
     def set_list(self, item_list):
-        pass
+        for item in reversed(item_list):
+            self.insert(0, item['name'])
 
     def get_selection(self):
         return self.get(self.curselection()[0])
@@ -322,16 +322,26 @@ class MiscListbox(CustomListbox):
         CustomListbox.__init__(self, parent, *args, **kwargs)
         self.config(width=20, height=12, font=(None, 14))
 
-    def set_list(self, item_list):
-        for item in reversed(item_list):
-            self.insert(0, item['name'])
-
     def change_list(self, list_type):
         self.clear()
         self.set_list(item_list=character.misc_type_list(list_type))
 
 
-class MiscButtonHolder(CustomHolderFrame):
+class WeaponsListbox(CustomListbox):
+    def __init__(self, parent, *args, **kwargs):
+        CustomListbox.__init__(self, parent, *args, **kwargs)
+        self.config(width=20, height=12, font=(None, 14))
+
+    def change_list(self, list_type):
+        self.clear()
+        self.set_list(item_list=character.weapon_type_list(list_type))
+
+    def set_list(self, item_list):
+        for item in reversed(item_list):
+            self.insert(0, f"{item['name']}")
+
+
+class ButtonHolder(CustomHolderFrame):
     def save(self):
         pass
 
@@ -415,4 +425,105 @@ class MiscAddDisplay(FrameTemplate, tk.Frame):
         character.misc_items.add_item(name=self.widgets[0].get_entry(),
                                       description=self.widgets[1].get_entry(),
                                       list_type=self.list_type)
+        self.parent.on_exit()
+
+
+class WeaponItemDisplay(FrameTemplate, tk.Frame):
+    DICT = {'Name': 'name',
+            'Attack Bonus': 'atk_bns',
+            'Damage': 'damage',
+            'Description': 'desc',
+            'Save Changes': 'save_btn',
+            'Delete': 'delete'}
+
+    def __init__(self, parent, item, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        FrameTemplate.__init__(self, *args, **kwargs)
+        self.item = item
+        self.parent = parent
+
+        self.set_widgets()
+
+    def create_widgets(self, key, values):
+        if values == 'name':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'atk_bns':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'damage':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'desc':
+            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
+        elif values == 'save_btn':
+            return MiscButton(self, text=key, command=self.save)
+        elif values == 'delete':
+            return MiscButton(self, text=key, command=self.delete)
+
+    def set_widgets(self):
+        self.widgets[0].set_entry(self.item['name'])
+        self.widgets[1].set_entry(self.item['atk_bns'])
+        self.widgets[2].set_entry(self.item['damage'])
+        self.widgets[3].set_entry(self.item['description'])
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
+        self.widgets[1].grid(row=1, column=0, sticky=tk.W)
+        self.widgets[2].grid(row=2, column=0, sticky=tk.W)
+        self.widgets[3].grid(row=3, column=0, columnspan=3)
+        self.widgets[4].grid(row=0, column=1)
+        self.widgets[5].grid(row=0, column=2)
+
+    def save(self):
+        self.item['name'] = self.widgets[0].get_entry()
+        self.item['atk_bns'] = self.widgets[1].get_entry()
+        self.item['damage'] = self.widgets[2].get_entry()
+        self.item['description'] = self.widgets[3].get_entry()
+        character.weapon_items.update(self.item)
+
+    def delete(self):
+        character.weapon_items.delete(self.item['id'])
+        self.parent.on_exit()
+
+
+class WeaponAddDisplay(FrameTemplate, tk.Frame):
+    DICT = {'Name': 'name',
+            'Attack Bonus': 'atk_bns',
+            'Damage': 'damage',
+            'Description': 'desc',
+            'Save & Close': 'save_btn'}
+
+    def __init__(self, parent, list_type, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        FrameTemplate.__init__(self, *args, **kwargs)
+        self.parent = parent
+        self.list_type = list_type
+
+    def create_widgets(self, key, values):
+        if values == 'name':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'atk_bns':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'damage':
+            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
+        elif values == 'desc':
+            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
+        elif values == 'save_btn':
+            return MiscButton(self, text=key, command=self.save)
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
+        self.widgets[1].grid(row=1, column=0, sticky=tk.W)
+        self.widgets[2].grid(row=2, column=0, sticky=tk.W)
+        self.widgets[3].grid(row=3, column=0, columnspan=2)
+        self.widgets[4].grid(row=0, column=1, sticky=tk.W)
+
+    def save(self):
+        character.weapon_items.add_item(name=self.widgets[0].get_entry(),
+                                        atk_bns=self.widgets[1].get_entry(),
+                                        damage=self.widgets[2].get_entry(),
+                                        description=self.widgets[3].get_entry(),
+                                        list_type=self.list_type)
         self.parent.on_exit()

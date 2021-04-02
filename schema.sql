@@ -1,10 +1,5 @@
 DROP TABLE IF EXISTS character;
 DROP TABLE IF EXISTS misc;
-DROP TABLE IF EXISTS feature;
-DROP TABLE IF EXISTS personality;
-DROP TABLE IF EXISTS proficiency;
-DROP TABLE IF EXISTS language;
-DROP TABLE IF EXISTS inventory;
 DROP TABLE IF EXISTS weapon;
 DROP TABLE IF EXISTS spell;
 
@@ -98,63 +93,13 @@ FOREIGN KEY (character_id) REFERENCES character (id)
     ON UPDATE CASCADE
     ON DELETE CASCADE);
 
-
-CREATE TABLE feature (
-id INTEGER PRIMARY KEY,
-name TEXT NOT NULL UNIQUE,
-description TEXT DEFAULT '',
-character_id INTEGER NOT NULL,
-FOREIGN KEY (character_id) REFERENCES character (id)
-    ON UPDATE CASCADE
-    ON DELETE CASCADE);
-
-
-CREATE TABLE personality (
-id INTEGER PRIMARY KEY,
-name TEXT NOT NULL,
-description TEXT DEFAULT '',
-character_id INTEGER NOT NULL,
-FOREIGN KEY (character_id) REFERENCES character (id)
-    ON UPDATE CASCADE
-    ON DELETE CASCADE
-);
-
-CREATE TABLE proficiency (
-id INTEGER PRIMARY KEY,
-name TEXT NOT NULL,
-description TEXT DEFAULT '',
-character_id INTEGER NOT NULL,
-FOREIGN KEY (character_id) REFERENCES character (id)
-    ON UPDATE CASCADE
-    ON DELETE CASCADE
-);
-
-CREATE TABLE language (
-id INTEGER PRIMARY KEY,
-name TEXT NOT NULL,
-description TEXT DEFAULT '',
-character_id INTEGER NOT NULL,
-FOREIGN KEY (character_id) REFERENCES character (id)
-    ON UPDATE CASCADE
-    ON DELETE CASCADE
-);
-
-CREATE TABLE inventory (
-id INTEGER PRIMARY KEY,
-name TEXT NOT NULL,
-description TEXT DEFAULT '',
-character_id INTEGER NOT NULL,
-FOREIGN KEY (character_id) REFERENCES character (id)
-    ON UPDATE CASCADE
-    ON DELETE CASCADE
-);
-
 CREATE TABLE weapon (
 id INTEGER PRIMARY KEY,
 name TEXT NOT NULL,
 atk_bns TEXT DEFAULT '',
 damage TEXT DEFAULT '',
 description TEXT DEFAULT '',
+type TEXT NOT NULL,
 character_id INTEGER NOT NULL,
 FOREIGN KEY (character_id) REFERENCES character (id)
     ON UPDATE CASCADE
