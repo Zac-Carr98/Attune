@@ -69,7 +69,8 @@ class BasicCombatCard(LevelOneCard):
         self.hp_card = HitPointsCard(self, 'Hit Points')
         self.hdice_card = HitDiceCard(self, 'Hit Dice')
         self.death_card = DeathSavesCard(self, 'Death Saves')
-        self.attacks_card = WeaponItemsMenu(self, 'Attacks')
+        # self.attacks_card = WeaponItemsMenu(self, 'Attacks')
+        self.attacks_card = MiscButton(self, text='Attacks', command=self.open_item)
 
         self.widgets.append(self.top_card)
         self.widgets.append(self.hp_card)
@@ -87,6 +88,27 @@ class BasicCombatCard(LevelOneCard):
         self.death_card.grid(row=2, column=2)
         self.attacks_card.grid(row=3, column=0, columnspan=3)
 
+    def open_item(self):
+        if not character.open_item:
+            menu = WeaponItemWindow2(self, title='Attacks Menu')
+
+            character.open_item = True
+
+
+class BasicSpellcastingCard(LevelOneCard):
+    def __init__(self, parent, title, *args, **kwargs):
+        LevelOneCard.__init__(self, parent, title, *args, **kwargs)
+
+        self.basics_card = SpellBasics(self, 'Spell Basics')
+
+        self.widgets.append(self.basics_card)
+
+    def grid_items(self):
+        self.inner_grid()
+        self.frame_label.grid(row=0, column=0)
+
+        self.basics_card.grid(row=1, column=0)
+
 
 # Card (frame) where all information is displayed.
 # inner widgets hold most logic relating to backend
@@ -98,6 +120,7 @@ class LevelTwoCard(tk.LabelFrame, FrameTemplate, ABC):
         FrameTemplate.__init__(self, *args, **kwargs)
 
         self.frame_label = tk.Label(self, text=title, font=(None, 17))
+        self.parent = parent
 
 
 # this card displays all info relating to the character at a surface level
@@ -433,13 +456,34 @@ class WeaponItemsMenu(SelectMenu):
         self.widgets[4].grid(row=2, column=0, sticky=tk.N + tk.EW)
 
     def open_item(self, selection):
-        if not character.open_item:
-            WeaponItemWindow(self, selection)
-            character.open_item = True
+        self.parent.open_item(selection)
 
     def add_item(self):
-        if not character.open_item:
-            WeaponItemWindow(self, 'New Item', self.entries[0])
+        self.parent.add_item()
+
+
+class SpellBasics(LevelTwoCard):
+    DICT = {'Casting Ablility': 'casting_ability',
+            'Spell Save DC': 'spell_save_dc',
+            'Spell Attack Bonus': 'spell_atk_bonus',
+            'Spell Book': 'spell_book'}
+
+    def create_widgets(self, key, values):
+        if values == 'spell_book':
+            return SpellBookButton(self, text=key, command=self.open_spell_book)
+        return LabelEntryPair(self, label_text=key, attr=values, entry_type=TextEntry, style='spell basics')
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.widgets[0].grid(row=0, column=0)
+        self.widgets[1].grid(row=1, column=0)
+        self.widgets[2].grid(row=2, column=0)
+        self.widgets[3].grid(row=3, column=0)
+
+    def open_spell_book(self):
+        if not character.open_spell_book:
+            self.widgets[3].pressed()
             character.open_item = True
 
 
@@ -499,3 +543,35 @@ class WeaponItemWindow(PopupWindow):
             return WeaponAddDisplay(self, self.item)
         else:
             return WeaponItemDisplay(self, self.item)
+
+
+class WeaponItemWindow2(PopupWindow):
+    DICT = {'Selection': 'select',
+            'Display': 'display'}
+
+    def __init__(self, parent, title, list_type=None, *args, **kwargs):
+        PopupWindow.__init__(self, parent, title, *args, **kwargs)
+
+        self.list_type = None
+        self.grid_items()
+
+    def create_widgets(self, key, values):
+        if values == 'select':
+            return WeaponItemsMenu(self, 'Attacks')
+        elif values == 'display':
+            return WeaponItemDisplay(self)
+
+    def grid_items(self):
+        self.inner_grid()
+        self.widgets[0].grid(row=0, column=0)
+        self.widgets[1].grid(row=0, column=1)
+
+    def open_item(self, selection):
+        self.widgets[1].item_mode(character.weapon_items.get_item(selection))
+
+    def add_item(self):
+        self.widgets[1].add_mode()
+
+    def on_exit(self):
+        character.open_item = False
+        self.destroy()

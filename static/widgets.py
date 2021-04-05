@@ -100,6 +100,10 @@ class LabelEntryPair(CustomHolderFrame):
             self.label.grid(row=1, column=0)
             self.entry.grid(row=0, column=0)
 
+        if self.style == 'spell basics':
+            self.label.grid(row=1, column=0)
+            self.entry.grid(row=0, column=0)
+
         elif self.style == 'textbox':
             self.entry.grid(row=0, column=0)
 
@@ -285,6 +289,17 @@ class CustomButton(ABC, tk.Button):
         pass
 
 
+class SpellBookButton(CustomButton):
+    def __init__(self, parent, *args, **kwargs):
+        CustomButton.__init__(self, parent, *args, **kwargs)
+
+    def pressed(self):
+        self.config(relief=tk.SUNKEN)
+
+    def release(self):
+        self.config(relief=tk.RAISED)
+
+
 class MiscButton(CustomButton):
     def __init__(self, parent, *args, **kwargs):
         CustomButton.__init__(self, parent, *args, **kwargs)
@@ -436,13 +451,14 @@ class WeaponItemDisplay(FrameTemplate, tk.Frame):
             'Save Changes': 'save_btn',
             'Delete': 'delete'}
 
-    def __init__(self, parent, item, *args, **kwargs):
+    def __init__(self, parent, item=None, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         FrameTemplate.__init__(self, *args, **kwargs)
         self.item = item
         self.parent = parent
 
-        self.set_widgets()
+        if item:
+            self.set_widgets()
 
     def create_widgets(self, key, values):
         if values == 'name':
@@ -472,18 +488,38 @@ class WeaponItemDisplay(FrameTemplate, tk.Frame):
         self.widgets[2].grid(row=2, column=0, sticky=tk.W)
         self.widgets[3].grid(row=3, column=0, columnspan=3)
         self.widgets[4].grid(row=0, column=1)
-        self.widgets[5].grid(row=0, column=2)
 
     def save(self):
-        self.item['name'] = self.widgets[0].get_entry()
-        self.item['atk_bns'] = self.widgets[1].get_entry()
-        self.item['damage'] = self.widgets[2].get_entry()
-        self.item['description'] = self.widgets[3].get_entry()
-        character.weapon_items.update(self.item)
+        if self.item:
+            self.item['name'] = self.widgets[0].get_entry()
+            self.item['atk_bns'] = self.widgets[1].get_entry()
+            self.item['damage'] = self.widgets[2].get_entry()
+            self.item['description'] = self.widgets[3].get_entry()
+            character.weapon_items.update(self.item)
+
+        else:
+            character.weapon_items.add_item(name=self.widgets[0].get_entry(),
+                                            atk_bns=self.widgets[1].get_entry(),
+                                            damage=self.widgets[2].get_entry(),
+                                            description=self.widgets[3].get_entry(),
+                                            list_type=self.parent.widgets[0].entries[0])
+        self.parent.widgets[0].refresh()
 
     def delete(self):
         character.weapon_items.delete(self.item['id'])
-        self.parent.on_exit()
+        self.parent.widgets[0].refresh()
+        self.add_mode()
+
+    def add_mode(self):
+        self.item = None
+        for i in range(0, 4):
+            self.widgets[i].reset()
+        self.widgets[5].grid_forget()
+
+    def item_mode(self, item):
+        self.item = item
+        self.set_widgets()
+        self.widgets[5].grid(row=1, column=1)
 
 
 class WeaponAddDisplay(FrameTemplate, tk.Frame):

@@ -8,12 +8,11 @@ class Character:
         self.id = None
         self.name = None
         self.__dict__.update(db_character)
-        self.weapons = []
-        self.spells = []
 
         self.misc_items = items.MiscItems('misc', self.id)
         self.weapon_items = items.WeaponItems('weapon', self.id)
         self.open_item = False
+        self.open_spell_book = False
         # self.test_add_item()
 
     def get_single_attr(self, attr):

@@ -34,6 +34,8 @@ class Items(ABC):
         for item in self.to_delete:
             db.delete_item(item['id'], self.item_type)
 
+        self.items_list = db.open_item_type(self.item_type, self.char_id)
+
     def get_item_list(self, list_type):
         item_list = []
 
