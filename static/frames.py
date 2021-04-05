@@ -90,7 +90,7 @@ class BasicCombatCard(LevelOneCard):
 
     def open_item(self):
         if not character.open_item:
-            menu = WeaponItemWindow2(self, title='Attacks Menu')
+            WeaponItemWindow(self, title='Attacks Menu')
 
             character.open_item = True
 
@@ -100,14 +100,17 @@ class BasicSpellcastingCard(LevelOneCard):
         LevelOneCard.__init__(self, parent, title, *args, **kwargs)
 
         self.basics_card = SpellBasics(self, 'Spell Basics')
+        self.spell_slots = SpellSlots(self, 'Spell Slots')
 
         self.widgets.append(self.basics_card)
+        self.widgets.append(self.spell_slots)
 
     def grid_items(self):
         self.inner_grid()
         self.frame_label.grid(row=0, column=0)
 
         self.basics_card.grid(row=1, column=0)
+        self.spell_slots.grid(row=2, column=0)
 
 
 # Card (frame) where all information is displayed.
@@ -462,6 +465,62 @@ class WeaponItemsMenu(SelectMenu):
         self.parent.add_item()
 
 
+class SpellBookMenu(SelectMenu):
+    DICT = {'Button Holder': 'button_holder',
+            'List_Box': 'list_box',
+            'Cantrips': ['cantrips', 2],
+            'Level One': ['1', 3],
+            'Level Two': ['2', 4],
+            'Level Three': ['3', 5],
+            'Level Four': ['4', 6],
+            'Level Five': ['5', 7],
+            'Level Six': ['6', 8],
+            'Level Seven': ['7', 9],
+            'Level Eight': ['8', 10],
+            'Level Nine': ['9', 11],
+            'Add': 'add'
+            }
+
+    def create_widgets(self, key, values):
+        if values == 'list_box':
+            listbox = SpellsListbox(self)
+            listbox.bind("<<ListboxSelect>>", lambda event: self.open_item(listbox.get_selection()))
+            return listbox
+        elif values == 'button_holder':
+            return ButtonHolder(self)
+        elif values == 'add':
+            return MiscButton(self.widgets[0], text=key, command=self.add_item)
+        else:
+            return MiscButton(self.widgets[0], text=key, command=lambda: self.change_list(values[0], values[1]))
+
+    def grid_items(self):
+        self.inner_grid()
+
+        self.entries.append(None)
+        self.entries.append(None)
+        self.change_list('cantrips', 2)
+
+        self.widgets[0].grid(row=0, column=0)
+        self.widgets[1].grid(row=0, column=1)
+        self.widgets[2].grid(row=0, column=0, sticky=tk.N + tk.EW)
+        self.widgets[3].grid(row=1, column=0, sticky=tk.N + tk.EW)
+        self.widgets[4].grid(row=2, column=0, sticky=tk.N + tk.EW)
+        self.widgets[5].grid(row=3, column=0, sticky=tk.N + tk.EW)
+        self.widgets[6].grid(row=4, column=0, sticky=tk.N + tk.EW)
+        self.widgets[7].grid(row=5, column=0, sticky=tk.N + tk.EW)
+        self.widgets[8].grid(row=6, column=0, sticky=tk.N + tk.EW)
+        self.widgets[9].grid(row=7, column=0, sticky=tk.N + tk.EW)
+        self.widgets[10].grid(row=8, column=0, sticky=tk.N + tk.EW)
+        self.widgets[11].grid(row=9, column=0, sticky=tk.N + tk.EW)
+        self.widgets[12].grid(row=10, column=0, sticky=tk.N + tk.EW)
+
+    def open_item(self, selection):
+        self.parent.open_item(selection)
+
+    def add_item(self):
+        self.parent.add_item()
+
+
 class SpellBasics(LevelTwoCard):
     DICT = {'Casting Ablility': 'casting_ability',
             'Spell Save DC': 'spell_save_dc',
@@ -484,7 +543,19 @@ class SpellBasics(LevelTwoCard):
     def open_spell_book(self):
         if not character.open_spell_book:
             self.widgets[3].pressed()
-            character.open_item = True
+            SpellBookWindow(self, title='Spell Book')
+            character.open_spell_book = True
+
+
+class SpellSlots(LevelTwoCard):
+    DICT = {}
+
+    def create_widgets(self, key, values):
+        pass
+
+    def grid_items(self):
+        self.inner_grid()
+        self.frame_label.grid(row=0, column=0)
 
 
 class PopupWindow(FrameTemplate, tk.Toplevel, ABC):
@@ -520,39 +591,18 @@ class MiscItemWindow(PopupWindow):
 
     def create_widgets(self, key, values):
         if self.title_string == 'New Item':
-            return MiscAddDisplay(self, self.item)
+            return MiscItemDisplay(self, list_type=self.item)
         else:
-            return MiscItemDisplay(self, self.item)
+            return MiscItemDisplay(self, item=self.item)
 
 
 class WeaponItemWindow(PopupWindow):
-    DICT = {'Display': 'display'}
-
-    def __init__(self, parent, title, list_type=None, *args, **kwargs):
-        self.title_string = title
-        if title == 'New Item':
-            self.item = list_type
-        else:
-            self.item = character.weapon_items.get_item(title)
-        PopupWindow.__init__(self, parent, title, *args, **kwargs)
-
-        self.grid_items()
-
-    def create_widgets(self, key, values):
-        if self.title_string == 'New Item':
-            return WeaponAddDisplay(self, self.item)
-        else:
-            return WeaponItemDisplay(self, self.item)
-
-
-class WeaponItemWindow2(PopupWindow):
     DICT = {'Selection': 'select',
             'Display': 'display'}
 
-    def __init__(self, parent, title, list_type=None, *args, **kwargs):
+    def __init__(self, parent, title, *args, **kwargs):
         PopupWindow.__init__(self, parent, title, *args, **kwargs)
 
-        self.list_type = None
         self.grid_items()
 
     def create_widgets(self, key, values):
@@ -574,4 +624,37 @@ class WeaponItemWindow2(PopupWindow):
 
     def on_exit(self):
         character.open_item = False
+        self.destroy()
+
+
+class SpellBookWindow(PopupWindow):
+    DICT = {'Selection': 'select',
+            'Display': 'display'}
+
+    def __init__(self, parent, title, list_type=None, *args, **kwargs):
+        PopupWindow.__init__(self, parent, title, *args, **kwargs)
+
+        self.list_type = list_type
+        self.grid_items()
+
+    def create_widgets(self, key, values):
+        if values == 'select':
+            return SpellBookMenu(self, 'Attacks')
+        elif values == 'display':
+            return SpellItemDisplay(self)
+
+    def grid_items(self):
+        self.inner_grid()
+        self.widgets[0].grid(row=0, column=0)
+        self.widgets[1].grid(row=0, column=1)
+
+    def open_item(self, selection):
+        self.widgets[1].item_mode(character.spell_items.get_item(selection))
+
+    def add_item(self):
+        self.widgets[1].add_mode()
+
+    def on_exit(self):
+        character.open_spell_book = False
+        self.parent.widgets[3].release()
         self.destroy()

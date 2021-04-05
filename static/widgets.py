@@ -54,6 +54,24 @@ class CustomHolderFrame(ABC, tk.Frame):
         pass
 
 
+class SpellSlotDisplay(FrameTemplate):
+    DICT = {'Label': 'label',
+            'Max': 'max',
+            'Used': 'used'}
+
+    def __init__(self, parent, *args, **kwargs):
+        FrameTemplate.__init__(self, parent, *args, **kwargs)
+
+    def create_widgets(self, key, values):
+        pass
+
+    def grid_items(self):
+        pass
+
+    def save(self):
+        pass
+
+
 class TopStatFrame(CustomHolderFrame):
     def __init__(self, parent, attr, label_text, *args, **kwargs):
         CustomHolderFrame.__init__(self, parent, *args, **kwargs)
@@ -356,6 +374,20 @@ class WeaponsListbox(CustomListbox):
             self.insert(0, f"{item['name']}")
 
 
+class SpellsListbox(CustomListbox):
+    def __init__(self, parent, *args, **kwargs):
+        CustomListbox.__init__(self, parent, *args, **kwargs)
+        self.config(width=20, height=12, font=(None, 14))
+
+    def change_list(self, list_type):
+        self.clear()
+        self.set_list(item_list=character.spell_type_list(list_type))
+
+    def set_list(self, item_list):
+        for item in reversed(item_list):
+            self.insert(0, f"{item['name']}")
+
+
 class ButtonHolder(CustomHolderFrame):
     def save(self):
         pass
@@ -364,22 +396,29 @@ class ButtonHolder(CustomHolderFrame):
         pass
 
 
-class MiscItemDisplay(FrameTemplate, tk.Frame):
-    DICT = {'Name': 'name',
-            'Description': 'desc',
-            'Save Changes': 'save_btn',
-            'Delete': 'delete'}
+class ItemDisplay(FrameTemplate, tk.Frame, ABC):
+    DICT = {}
 
-    def __init__(self, parent, item, *args, **kwargs):
+    def __init__(self, parent, item=None, list_type=None, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         FrameTemplate.__init__(self, *args, **kwargs)
         self.item = item
         self.parent = parent
+        self.list_type = list_type
 
-        self.set_widgets()
+        if self.item:
+            self.set_widgets()
+
+    @abstractmethod
+    def set_widgets(self):
+        pass
+
+    @abstractmethod
+    def delete(self):
+        pass
 
     def create_widgets(self, key, values):
-        if values == 'name':
+        if values in ('name', 'atk_bns', 'damage', 'casting_time', 'range', 'components', 'duration', 'school'):
             return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
         elif values == 'desc':
             return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
@@ -387,6 +426,13 @@ class MiscItemDisplay(FrameTemplate, tk.Frame):
             return MiscButton(self, text=key, command=self.save)
         elif values == 'delete':
             return MiscButton(self, text=key, command=self.delete)
+
+
+class MiscItemDisplay(ItemDisplay):
+    DICT = {'Name': 'name',
+            'Description': 'desc',
+            'Save Changes': 'save_btn',
+            'Delete': 'delete'}
 
     def set_widgets(self):
         self.widgets[0].set_entry(self.item['name'])
@@ -401,78 +447,39 @@ class MiscItemDisplay(FrameTemplate, tk.Frame):
         self.widgets[3].grid(row=0, column=2)
 
     def save(self):
-        self.item['name'] = self.widgets[0].get_entry()
-        self.item['description'] = self.widgets[1].get_entry()
-        character.misc_items.update(self.item)
+        if self.item:
+            self.item['name'] = self.widgets[0].get_entry()
+            self.item['description'] = self.widgets[1].get_entry()
+            character.misc_items.update(self.item)
+        else:
+            character.misc_items.add_item(name=self.widgets[0].get_entry(),
+                                          description=self.widgets[1].get_entry(),
+                                          list_type=self.list_type)
+            self.parent.on_exit()
 
     def delete(self):
         character.misc_items.delete(self.item['id'])
         self.parent.on_exit()
 
+    def add_mode(self):
+        self.item = None
+        for i in range(0, 2):
+            self.widgets[i].reset()
+        self.widgets[3].grid_forget()
 
-class MiscAddDisplay(FrameTemplate, tk.Frame):
-    DICT = {'Name': 'name',
-            'Description': 'desc',
-            'Save & Close': 'save_btn'}
-
-    def __init__(self, parent, list_type, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-        FrameTemplate.__init__(self, *args, **kwargs)
-        self.parent = parent
-        self.list_type = list_type
-
-    def create_widgets(self, key, values):
-        if values == 'name':
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'desc':
-            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
-        elif values == 'save_btn':
-            return MiscButton(self, text=key, command=self.save)
-
-    def grid_items(self):
-        self.inner_grid()
-
-        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
-        self.widgets[1].grid(row=1, column=0, columnspan=2)
-        self.widgets[2].grid(row=0, column=1)
-
-    def save(self):
-        character.misc_items.add_item(name=self.widgets[0].get_entry(),
-                                      description=self.widgets[1].get_entry(),
-                                      list_type=self.list_type)
-        self.parent.on_exit()
+    def item_mode(self, item):
+        self.item = item
+        self.set_widgets()
+        self.widgets[3].grid(row=0, column=2)
 
 
-class WeaponItemDisplay(FrameTemplate, tk.Frame):
+class WeaponItemDisplay(ItemDisplay):
     DICT = {'Name': 'name',
             'Attack Bonus': 'atk_bns',
             'Damage': 'damage',
             'Description': 'desc',
             'Save Changes': 'save_btn',
             'Delete': 'delete'}
-
-    def __init__(self, parent, item=None, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-        FrameTemplate.__init__(self, *args, **kwargs)
-        self.item = item
-        self.parent = parent
-
-        if item:
-            self.set_widgets()
-
-    def create_widgets(self, key, values):
-        if values == 'name':
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'atk_bns':
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'damage':
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'desc':
-            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
-        elif values == 'save_btn':
-            return MiscButton(self, text=key, command=self.save)
-        elif values == 'delete':
-            return MiscButton(self, text=key, command=self.delete)
 
     def set_widgets(self):
         self.widgets[0].set_entry(self.item['name'])
@@ -522,30 +529,25 @@ class WeaponItemDisplay(FrameTemplate, tk.Frame):
         self.widgets[5].grid(row=1, column=1)
 
 
-class WeaponAddDisplay(FrameTemplate, tk.Frame):
+class SpellItemDisplay(ItemDisplay):
     DICT = {'Name': 'name',
-            'Attack Bonus': 'atk_bns',
-            'Damage': 'damage',
+            'Casting Time': 'casting_time',
+            'Range': 'range',
+            'Components': 'components',
+            'Duration': 'duration',
+            'School': 'school',
             'Description': 'desc',
-            'Save & Close': 'save_btn'}
+            'Save Changes': 'save_btn',
+            'Delete': 'delete'}
 
-    def __init__(self, parent, list_type, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-        FrameTemplate.__init__(self, *args, **kwargs)
-        self.parent = parent
-        self.list_type = list_type
-
-    def create_widgets(self, key, values):
-        if values == 'name':
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'atk_bns':
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'damage':
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'desc':
-            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
-        elif values == 'save_btn':
-            return MiscButton(self, text=key, command=self.save)
+    def set_widgets(self):
+        self.widgets[0].set_entry(self.item['name'])
+        self.widgets[1].set_entry(self.item['casting_time'])
+        self.widgets[2].set_entry(self.item['range'])
+        self.widgets[3].set_entry(self.item['components'])
+        self.widgets[4].set_entry(self.item['duration'])
+        self.widgets[5].set_entry(self.item['school'])
+        self.widgets[6].set_entry(self.item['description'])
 
     def grid_items(self):
         self.inner_grid()
@@ -553,13 +555,46 @@ class WeaponAddDisplay(FrameTemplate, tk.Frame):
         self.widgets[0].grid(row=0, column=0, sticky=tk.W)
         self.widgets[1].grid(row=1, column=0, sticky=tk.W)
         self.widgets[2].grid(row=2, column=0, sticky=tk.W)
-        self.widgets[3].grid(row=3, column=0, columnspan=2)
-        self.widgets[4].grid(row=0, column=1, sticky=tk.W)
+        self.widgets[3].grid(row=0, column=1, sticky=tk.W)
+        self.widgets[4].grid(row=1, column=1, sticky=tk.W)
+        self.widgets[5].grid(row=2, column=1, sticky=tk.W)
+        self.widgets[6].grid(row=3, column=0, columnspan=3)
+        self.widgets[7].grid(row=0, column=2)
+
+    def delete(self):
+        character.spell_items.delete(self.item['id'])
+        self.parent.widgets[0].refresh()
+        self.add_mode()
+
+    def add_mode(self):
+        self.item = None
+        for i in range(0, 7):
+            self.widgets[i].reset()
+        self.widgets[8].grid_forget()
+
+    def item_mode(self, item):
+        self.item = item
+        self.set_widgets()
+        self.widgets[8].grid(row=1, column=2)
 
     def save(self):
-        character.weapon_items.add_item(name=self.widgets[0].get_entry(),
-                                        atk_bns=self.widgets[1].get_entry(),
-                                        damage=self.widgets[2].get_entry(),
-                                        description=self.widgets[3].get_entry(),
-                                        list_type=self.list_type)
-        self.parent.on_exit()
+        if self.item:
+            self.item['name'] = self.widgets[0].get_entry()
+            self.item['casting_time'] = self.widgets[1].get_entry()
+            self.item['range'] = self.widgets[2].get_entry()
+            self.item['components'] = self.widgets[3].get_entry()
+            self.item['duration'] = self.widgets[4].get_entry()
+            self.item['school'] = self.widgets[5].get_entry()
+            self.item['description'] = self.widgets[6].get_entry()
+            character.spell_items.update(self.item)
+
+        else:
+            character.spell_items.add_item(name=self.widgets[0].get_entry(),
+                                           casting_time=self.widgets[1].get_entry(),
+                                           spell_range=self.widgets[2].get_entry(),
+                                           components=self.widgets[3].get_entry(),
+                                           duration=self.widgets[4].get_entry(),
+                                           school=self.widgets[5].get_entry(),
+                                           description=self.widgets[6].get_entry(),
+                                           level=self.parent.widgets[0].entries[0])
+        self.parent.widgets[0].refresh()

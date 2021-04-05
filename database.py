@@ -63,7 +63,7 @@ def open_item_type(item_type, char_id):
 
     c = db.cursor()
     c.execute(
-                f'SELECT * FROM {item_type} WHERE character_id=?', (char_id,)
+        f'SELECT * FROM {item_type} WHERE character_id=?', (char_id,)
     )
 
     items = [dict(row) for row in c.fetchall()]
@@ -72,7 +72,6 @@ def open_item_type(item_type, char_id):
 
 
 def insert_misc_item(item):
-
     db = get_db()
 
     db.execute(
@@ -84,13 +83,28 @@ def insert_misc_item(item):
 
 
 def insert_weapon_item(item):
-
     db = get_db()
 
     db.execute(
         f'INSERT INTO weapon (name, atk_bns, damage, description, type, character_id) '
         f'VALUES (?, ?, ?, ?, ?, ?)', (item['name'], item['atk_bns'], item['damage'],
-                                 item['description'], item['type'], item['character_id'])
+                                       item['description'], item['type'], item['character_id'])
+    )
+
+    db.commit()
+
+
+def insert_spell_item(item):
+    db = get_db()
+
+    db.execute(
+        f'INSERT INTO spell ('
+        f'name, casting_time, range, components, '
+        f'duration, school, description, type, character_id) '
+        f'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (item['name'], item['casting_time'],
+                                                item['range'], item['components'], item['duration'],
+                                                item['school'], item['description'], item['type'],
+                                                item['character_id'])
     )
 
     db.commit()
@@ -109,9 +123,24 @@ def update_weapon_item(item):
     db = get_db()
 
     db.execute(
-        f'UPDATE weapon SET name=?, atk_bns=?, damage=?, description=? WHERE id=?', (item['name'], item['atk_bns'],
-                                                                                   item['damage'], item['description'],
-                                                                                   item['id'])
+        f'UPDATE weapon SET name=?, atk_bns=?, damage=?, description=? WHERE id=?', (item['name'],
+                                                                                     item['atk_bns'],
+                                                                                     item['damage'],
+                                                                                     item['description'],
+                                                                                     item['id'])
+    )
+    db.commit()
+
+
+def update_spell_item(item):
+    db = get_db()
+
+    db.execute(
+        f'UPDATE spell SET name=?, casting_time=?, range=?, '
+        f'components=?, duration=?, school=?, description=? WHERE id=?',
+        (item['name'], item['casting_time'],
+         item['range'], item['components'], item['duration'],
+         item['school'], item['description'], item['id'])
     )
     db.commit()
 

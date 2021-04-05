@@ -86,3 +86,16 @@ class WeaponItems(Items):
 
     def save(self):
         self.save_funct(db.insert_weapon_item, db.update_weapon_item)
+
+
+class SpellItems(Items):
+    def add_item(self, name, level, casting_time, spell_range, components, duration, school, description):
+        if self.check_name(name):
+            new_item = {'name': name, 'type': level, 'casting_time': casting_time,
+                        'range': spell_range, 'components': components,
+                        'duration': duration, 'school': school, 'description': description,
+                        'character_id': self.char_id, 'id': 0}
+            self.items_list.append(new_item)
+
+    def save(self):
+        self.save_funct(db.insert_spell_item, db.update_spell_item)

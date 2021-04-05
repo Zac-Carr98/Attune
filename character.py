@@ -11,6 +11,7 @@ class Character:
 
         self.misc_items = items.MiscItems('misc', self.id)
         self.weapon_items = items.WeaponItems('weapon', self.id)
+        self.spell_items = items.SpellItems('spell', self.id)
         self.open_item = False
         self.open_spell_book = False
         # self.test_add_item()
@@ -26,6 +27,9 @@ class Character:
 
     def weapon_type_list(self, list_type):
         return self.weapon_items.get_item_list(list_type)
+
+    def spell_type_list(self, list_type):
+        return self.spell_items.get_item_list(list_type)
 
     def test_add_item(self):
         self.misc_items.add_item(name='Coward',

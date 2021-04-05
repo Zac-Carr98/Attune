@@ -109,7 +109,7 @@ FOREIGN KEY (character_id) REFERENCES character (id)
 CREATE TABLE spell (
 id INTEGER PRIMARY KEY,
 name TEXT NOT NULL,
-level TEXT DEFAULT '',
+type TEXT DEFAULT '',
 casting_time TEXT DEFAULT '',
 range TEXT DEFAULT '',
 components TEXT DEFAULT '',
