@@ -9,7 +9,6 @@ from static.widgets import *
 class LevelOneCard(ABC, tk.LabelFrame):
     def __init__(self, parent, title, *args, **kwargs):
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
-
         self.frame_label = tk.Label(self, text=title, font=(None, 20))
 
         self.widgets = []
@@ -134,6 +133,8 @@ class MiscCard(LevelTwoCard):
             'Background': 'background',
             'Race': 'race',
             'Alignment': 'alignment',
+            'Experience': 'experience',
+            'Inspiration': 'inspiration',
             'Proficiency': 'proficiency'}
 
     def create_widgets(self, key, values):
@@ -144,14 +145,16 @@ class MiscCard(LevelTwoCard):
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
+        self.frame_label.grid(row=0, column=0, columnspan=3)
 
         self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=2, column=0, sticky=tk.E)
-        self.widgets[2].grid(row=3, column=0, sticky=tk.E)
-        self.widgets[3].grid(row=4, column=0, sticky=tk.E)
-        self.widgets[4].grid(row=5, column=0, sticky=tk.E)
-        self.widgets[5].grid(row=6, column=0, sticky=tk.E)
+        self.widgets[1].grid(row=1, column=1, sticky=tk.E)
+        self.widgets[2].grid(row=1, column=2, sticky=tk.E)
+        self.widgets[3].grid(row=2, column=0, sticky=tk.E)
+        self.widgets[4].grid(row=2, column=1, sticky=tk.E)
+        self.widgets[5].grid(row=2, column=2, sticky=tk.E)
+        self.widgets[6].grid(row=3, column=0, sticky=tk.E)
+        self.widgets[7].grid(row=3, column=1, sticky=tk.E)
 
 
 # displays character's ability scores. each label and entry are generated using the LabelEntryPair widget
@@ -478,7 +481,7 @@ class SpellBookMenu(SelectMenu):
             'Level Seven': ['7', 9],
             'Level Eight': ['8', 10],
             'Level Nine': ['9', 11],
-            'Add': 'add'
+            'Add': 'add',
             }
 
     def create_widgets(self, key, values):
@@ -503,16 +506,21 @@ class SpellBookMenu(SelectMenu):
         self.widgets[0].grid(row=0, column=0)
         self.widgets[1].grid(row=0, column=1)
         self.widgets[2].grid(row=0, column=0, sticky=tk.N + tk.EW)
+
         self.widgets[3].grid(row=1, column=0, sticky=tk.N + tk.EW)
         self.widgets[4].grid(row=2, column=0, sticky=tk.N + tk.EW)
-        self.widgets[5].grid(row=3, column=0, sticky=tk.N + tk.EW)
-        self.widgets[6].grid(row=4, column=0, sticky=tk.N + tk.EW)
-        self.widgets[7].grid(row=5, column=0, sticky=tk.N + tk.EW)
-        self.widgets[8].grid(row=6, column=0, sticky=tk.N + tk.EW)
-        self.widgets[9].grid(row=7, column=0, sticky=tk.N + tk.EW)
-        self.widgets[10].grid(row=8, column=0, sticky=tk.N + tk.EW)
-        self.widgets[11].grid(row=9, column=0, sticky=tk.N + tk.EW)
-        self.widgets[12].grid(row=10, column=0, sticky=tk.N + tk.EW)
+
+        self.widgets[5].grid(row=2, column=0, sticky=tk.N + tk.EW)
+        self.widgets[6].grid(row=3, column=0, sticky=tk.N + tk.EW)
+
+        self.widgets[7].grid(row=3, column=0, sticky=tk.N + tk.EW)
+        self.widgets[8].grid(row=4, column=0, sticky=tk.N + tk.EW)
+
+        self.widgets[9].grid(row=5, column=0, sticky=tk.N + tk.EW)
+        self.widgets[10].grid(row=6, column=0, sticky=tk.N + tk.EW)
+
+        self.widgets[11].grid(row=7, column=0, sticky=tk.N + tk.EW)
+        self.widgets[12].grid(row=8, column=0, sticky=tk.N + tk.EW)
 
     def open_item(self, selection):
         self.parent.open_item(selection)
@@ -548,14 +556,48 @@ class SpellBasics(LevelTwoCard):
 
 
 class SpellSlots(LevelTwoCard):
-    DICT = {}
+    DICT = {'Holder': 'hold',
+            'Level One': 'one',
+            'Level Two': 'two',
+            'Level Three': 'three',
+            'Level Four': 'four',
+            'Level Five': 'five',
+            'Level Six': 'six',
+            'Level Seven': 'seven',
+            'Level Eight': 'eight',
+            'Level Nine': 'nine'}
 
     def create_widgets(self, key, values):
-        pass
+        if values == 'hold':
+            return ButtonHolder(self)
+        else:
+            label = LevelTwoLabel(self.widgets[0], text=key)
+            entries = SpellSlotDisplay(self.widgets[0], f'{values}_max', f'{values}_used' )
+            return [label, entries]
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
+        self.frame_label.grid(row=0, column=0, columnspan=3)
+
+        self.widgets[0].grid(row=1, column=0)
+        self.widgets[1][0].grid(row=2, column=0)
+        self.widgets[1][1].grid(row=2, column=1)
+        self.widgets[2][0].grid(row=3, column=0)
+        self.widgets[2][1].grid(row=3, column=1)
+        self.widgets[3][0].grid(row=4, column=0)
+        self.widgets[3][1].grid(row=4, column=1)
+        self.widgets[4][0].grid(row=5, column=0)
+        self.widgets[4][1].grid(row=5, column=1)
+        self.widgets[5][0].grid(row=6, column=0)
+        self.widgets[5][1].grid(row=6, column=1)
+        self.widgets[6][0].grid(row=7, column=0)
+        self.widgets[6][1].grid(row=7, column=1)
+        self.widgets[7][0].grid(row=8, column=0)
+        self.widgets[7][1].grid(row=8, column=1)
+        self.widgets[8][0].grid(row=9, column=0)
+        self.widgets[8][1].grid(row=9, column=1)
+        self.widgets[9][0].grid(row=10, column=0)
+        self.widgets[9][1].grid(row=10, column=1)
 
 
 class PopupWindow(FrameTemplate, tk.Toplevel, ABC):
@@ -655,6 +697,8 @@ class SpellBookWindow(PopupWindow):
         self.widgets[1].add_mode()
 
     def on_exit(self):
+        for i in self.widgets:
+            i.save()
         character.open_spell_book = False
         self.parent.widgets[3].release()
         self.destroy()

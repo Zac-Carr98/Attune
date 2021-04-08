@@ -31,11 +31,19 @@ class FrameTemplate(ABC):
 
     def inner_grid(self):
         for widget in self.widgets:
-            widget.grid_items()
+            if isinstance(widget, list):
+                for j in widget:
+                    j.grid_items()
+            else:
+                widget.grid_items()
 
     def save(self):
         for widget in self.widgets:
-            widget.save()
+            if isinstance(widget, list):
+                for j in widget:
+                    j.save()
+            else:
+                widget.save()
 
 
 class CustomHolderFrame(ABC, tk.Frame):
@@ -54,22 +62,25 @@ class CustomHolderFrame(ABC, tk.Frame):
         pass
 
 
-class SpellSlotDisplay(FrameTemplate):
-    DICT = {'Label': 'label',
-            'Max': 'max',
+class SpellSlotDisplay(FrameTemplate, tk.Frame):
+    DICT = {'Max': 'max',
             'Used': 'used'}
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, max_ss, current_ss, *args, **kwargs):
+        self.max_ss = max_ss
+        self.current_ss = current_ss
+        tk.Frame.__init__(self, parent, *args, **kwargs)
         FrameTemplate.__init__(self, parent, *args, **kwargs)
 
     def create_widgets(self, key, values):
-        pass
+        if values == 'max':
+            return SSNumberEntry(self, self.max_ss)
+        elif values == 'used':
+            return SSNumberEntry(self, self.current_ss)
 
     def grid_items(self):
-        pass
-
-    def save(self):
-        pass
+        self.widgets[0].grid(row=0, column=0)
+        self.widgets[1].grid(row=0, column=1)
 
 
 class TopStatFrame(CustomHolderFrame):
@@ -127,7 +138,7 @@ class LabelEntryPair(CustomHolderFrame):
 
         else:
             self.label.grid(row=0, column=0)
-            self.entry.grid(row=0, column=1)
+            self.entry.grid(row=0, column=1, sticky=tk.EW)
 
             self.columnconfigure(0, weight=1)
             self.columnconfigure(1, weight=1)
@@ -192,6 +203,17 @@ class CustomLabel(ABC, tk.Label):
     def __init__(self, parent, *args, **kwargs):
         tk.Label.__init__(self, parent, *args, **kwargs)
 
+    def grid_items(self):
+        pass
+
+    def save(self):
+        pass
+
+
+class LevelTwoLabel(CustomLabel):
+    def __init__(self, parent, *args, **kwargs):
+        CustomLabel.__init__(self, parent, *args, **kwargs)
+
 
 class ModLabel(CustomLabel):
     def __init__(self, parent, ability, prof=False, *args, **kwargs):
@@ -241,6 +263,23 @@ class NumberEntry(CustomEntry):
     def check_entry_len(self):
         if len(self.get()) > 4:
             return 'Error, too many digits'
+
+
+class SSNumberEntry(NumberEntry):
+    def __init__(self, parent, spell_slot, *args, **kwargs):
+        NumberEntry.__init__(self, parent, *args, **kwargs)
+        self.spell_slot = spell_slot
+
+        self.set_entry()
+
+    def set_entry(self):
+        self.insert(0, character.get_single_attr(self.spell_slot))
+
+    def save(self):
+        character.save_single_attr(self.spell_slot, self.get())
+
+    def grid_items(self):
+        pass
 
 
 class TextEntry(CustomEntry):
@@ -552,12 +591,12 @@ class SpellItemDisplay(ItemDisplay):
     def grid_items(self):
         self.inner_grid()
 
-        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
-        self.widgets[1].grid(row=1, column=0, sticky=tk.W)
-        self.widgets[2].grid(row=2, column=0, sticky=tk.W)
-        self.widgets[3].grid(row=0, column=1, sticky=tk.W)
-        self.widgets[4].grid(row=1, column=1, sticky=tk.W)
-        self.widgets[5].grid(row=2, column=1, sticky=tk.W)
+        self.widgets[0].grid(row=0, column=0, sticky=tk.EW)
+        self.widgets[1].grid(row=1, column=0, sticky=tk.EW)
+        self.widgets[2].grid(row=2, column=0, sticky=tk.EW)
+        self.widgets[3].grid(row=0, column=1, sticky=tk.EW)
+        self.widgets[4].grid(row=1, column=1, sticky=tk.EW)
+        self.widgets[5].grid(row=2, column=1, sticky=tk.EW)
         self.widgets[6].grid(row=3, column=0, columnspan=3)
         self.widgets[7].grid(row=0, column=2)
 
