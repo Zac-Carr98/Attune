@@ -1,15 +1,13 @@
-import tkinter as tk
-from abc import ABC, abstractmethod
-from character import character
-from static.settings import *
-from static.widgets import *
+
+from static.subframes import *
 
 
 # abstract class for the cards that hold all other cards, used to define style and look
 class LevelOneCard(ABC, tk.LabelFrame):
     def __init__(self, parent, title, *args, **kwargs):
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
-        self.frame_label = tk.Label(self, text=title, font=(None, 20))
+        self.frame_label = LevelOneLabel(self, text=title, font=(None, 20))
+        self.config(bg=LEVELONE)
 
         self.widgets = []
         self.entries = []
@@ -50,13 +48,13 @@ class BasicInfoCard(LevelOneCard):
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
-        self.misc_card.grid(row=1, column=0)
-        self.abilities_card.grid(row=1, column=1)
-        self.saves_card.grid(row=1, column=2)
-        self.skill_card.grid(row=1, column=3)
-        self.gold_card.grid(row=1, column=4)
-        self.misc_features_card.grid(row=2, column=1)
+        self.frame_label.grid(row=0, column=0, columnspan=5)
+        self.misc_card.grid(row=1, column=0, sticky='n', columnspan=3)
+        self.abilities_card.grid(row=2, column=0, rowspan=2, sticky='n')
+        self.saves_card.grid(row=2, column=1, sticky='n')
+        self.skill_card.grid(row=2, column=2, sticky='n', rowspan=2)
+        self.gold_card.grid(row=3, column=3)
+        self.misc_features_card.grid(row=1, column=3, rowspan=2, sticky='n')
 
 
 # displays most info relating to combat as inner frame
@@ -64,14 +62,18 @@ class BasicCombatCard(LevelOneCard):
     def __init__(self, parent, title, *args, **kwargs):
         LevelOneCard.__init__(self, parent, title, *args, **kwargs)
 
-        self.top_card = TopCombatCard(self, 'Top Stats')
+        self.ac_card = ACCard(self, "AC")
+        self.init_card = InitCard(self, 'Initiative')
+        self.speed_card = SpeedCard(self, 'Speed')
+
         self.hp_card = HitPointsCard(self, 'Hit Points')
         self.hdice_card = HitDiceCard(self, 'Hit Dice')
         self.death_card = DeathSavesCard(self, 'Death Saves')
-        # self.attacks_card = WeaponItemsMenu(self, 'Attacks')
         self.attacks_card = MiscButton(self, text='Attacks', command=self.open_item)
 
-        self.widgets.append(self.top_card)
+        self.widgets.append(self.ac_card)
+        self.widgets.append(self.init_card)
+        self.widgets.append(self.speed_card)
         self.widgets.append(self.hp_card)
         self.widgets.append(self.hdice_card)
         self.widgets.append(self.death_card)
@@ -79,13 +81,20 @@ class BasicCombatCard(LevelOneCard):
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
+        self.frame_label.grid(row=0, column=0, columnspan=4)
 
-        self.top_card.grid(row=1, column=0, columnspan=3)
-        self.hp_card.grid(row=2, column=0)
-        self.hdice_card.grid(row=2, column=1)
-        self.death_card.grid(row=2, column=2)
-        self.attacks_card.grid(row=3, column=0, columnspan=3)
+        self.ac_card.grid(row=1, column=0, sticky='nsew')
+        self.init_card.grid(row=1, column=1, sticky='nsew', columnspan=2)
+        self.speed_card.grid(row=1, column=3, sticky='nsew')
+        self.hp_card.grid(row=2, column=0, columnspan=4, sticky='ew')
+        self.hdice_card.grid(row=3, column=0, sticky='ew', columnspan=2)
+        self.death_card.grid(row=3, column=2, sticky='ew', columnspan=2)
+        self.attacks_card.grid(row=4, column=1, columnspan=2)
+
+        self.columnconfigure(0, weight=2)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
+        self.columnconfigure(3, weight=2)
 
     def open_item(self):
         if not character.open_item:
@@ -120,8 +129,9 @@ class LevelTwoCard(tk.LabelFrame, FrameTemplate, ABC):
     def __init__(self, parent, title, *args, **kwargs):
         tk.LabelFrame.__init__(self, parent, *args, **kwargs)
         FrameTemplate.__init__(self, *args, **kwargs)
+        self.config(bg=LEVELTWO)
 
-        self.frame_label = tk.Label(self, text=title, font=(None, 17))
+        self.frame_label = LevelTwoLabel(self, text=title, font=(None, 17))
         self.parent = parent
 
 
@@ -139,22 +149,41 @@ class MiscCard(LevelTwoCard):
 
     def create_widgets(self, key, values):
         if values == 'proficiency':
-            return LabelEntryPair(self, entry_type=NumberEntry, label_text=key, attr=values)
+            label = LevelTwoLabel(self, text=key)
+            entry = NumberEntry(self, attr=values)
+            return [label, entry]
         else:
-            return LabelEntryPair(self, entry_type=TextEntry, label_text=key, attr=values)
+            label = LevelTwoLabel(self, text=key)
+            entry = TextEntry(self, attr=values)
+            return [label, entry]
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0, columnspan=3)
+        self.frame_label.grid(row=0, column=0, columnspan=6)
 
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=1, column=1, sticky=tk.E)
-        self.widgets[2].grid(row=1, column=2, sticky=tk.E)
-        self.widgets[3].grid(row=2, column=0, sticky=tk.E)
-        self.widgets[4].grid(row=2, column=1, sticky=tk.E)
-        self.widgets[5].grid(row=2, column=2, sticky=tk.E)
-        self.widgets[6].grid(row=3, column=0, sticky=tk.E)
-        self.widgets[7].grid(row=3, column=1, sticky=tk.E)
+        self.widgets[0][0].grid(row=1, column=0, sticky=tk.W)
+        self.widgets[0][1].grid(row=1, column=1, sticky=tk.E)
+
+        self.widgets[1][0].grid(row=1, column=2, sticky=tk.W)
+        self.widgets[1][1].grid(row=1, column=3, sticky=tk.E)
+
+        self.widgets[2][0].grid(row=1, column=4, sticky=tk.W)
+        self.widgets[2][1].grid(row=1, column=5, sticky=tk.E)
+
+        self.widgets[3][0].grid(row=2, column=0, sticky=tk.W)
+        self.widgets[3][1].grid(row=2, column=1, sticky=tk.E)
+
+        self.widgets[4][0].grid(row=2, column=2, sticky=tk.W)
+        self.widgets[4][1].grid(row=2, column=3, sticky=tk.E)
+
+        self.widgets[5][0].grid(row=2, column=4, sticky=tk.W)
+        self.widgets[5][1].grid(row=2, column=5, sticky=tk.E)
+
+        self.widgets[6][0].grid(row=3, column=0, sticky=tk.W)
+        self.widgets[6][1].grid(row=3, column=1, sticky=tk.E)
+
+        self.widgets[7][0].grid(row=3, column=2, sticky=tk.W)
+        self.widgets[7][1].grid(row=3, column=3, sticky=tk.W)
 
 
 # displays character's ability scores. each label and entry are generated using the LabelEntryPair widget
@@ -167,20 +196,24 @@ class AbilityCard(LevelTwoCard):
             'Charisma': 'charisma'}
 
     def create_widgets(self, key, values):
-        pair = LabelEntryPair(self, entry_type=NumberEntry, label_text=key, attr=values)
-        pair.add_mod()
-        return pair
+        label = LevelTwoLabel(self, text=key)
+        entry = NumberEntry(self, values, font=(None, 12))
+        mod = AbilitiesMod(self, ability=values)
+
+        return [label, entry, mod]
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
+        # self.frame_label.grid(row=0, column=0, columnspan=3)
 
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=2, column=0, sticky=tk.E)
-        self.widgets[2].grid(row=3, column=0, sticky=tk.E)
-        self.widgets[3].grid(row=4, column=0, sticky=tk.E)
-        self.widgets[4].grid(row=5, column=0, sticky=tk.E)
-        self.widgets[5].grid(row=6, column=0, sticky=tk.E)
+        row = 1
+        for i in self.widgets:
+            i[2].grid(row=row, column=0, pady=(15, 0), sticky='ew')
+            row += 1
+            i[1].grid(row=row, column=0)
+            row += 1
+            i[0].grid(row=row, column=0, sticky='ew')
+            row += 1
 
 
 # Displays the characters Saving throws
@@ -194,18 +227,17 @@ class SavesCard(LevelTwoCard):
             'Charisma': ['charisma_throw', 'charisma']}
 
     def create_widgets(self, key, values):
-        return CheckLabelPair(self, attr1=values[1], attr2=values[0], label_text=key)
+        label = SavingMod(self, attr=values[0], ability=values[1])
+        check = CustomCheckbutton(self, attr=values[0], text=key)
+        return [check, label]
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
+        self.frame_label.grid(row=0, column=0, columnspan=2)
 
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=2, column=0, sticky=tk.E)
-        self.widgets[2].grid(row=3, column=0, sticky=tk.E)
-        self.widgets[3].grid(row=4, column=0, sticky=tk.E)
-        self.widgets[4].grid(row=5, column=0, sticky=tk.E)
-        self.widgets[5].grid(row=6, column=0, sticky=tk.E)
+        for index, i in enumerate(self.widgets):
+            i[0].grid(row=index + 1, column=0, sticky=tk.W)
+            i[1].grid(row=index + 1, column=1, sticky=tk.W)
 
 
 # displays the characters skills in much the same way as saving throws
@@ -230,36 +262,18 @@ class SkillsCard(LevelTwoCard):
             'Stealth': ['stealth', 'dexterity'],
             'Survival': ['survival', 'wisdom']}
 
-    # this function is deprecated and should be removed after testing
-    def pair_factory(self):
-        for key, values in self.DICT.items():
-            self.widgets.append(self.create_widgets(key, values))
-
     def create_widgets(self, key, values):
-        return CheckLabelPair(self, attr1=values[1], attr2=values[0], label_text=key)
+        label = SavingMod(self, attr=values[0], ability=values[1])
+        check = CustomCheckbutton(self, attr=values[0], text=key)
+        return [check, label]
 
     def grid_items(self):
         self.inner_grid()
         self.frame_label.grid(row=0, column=0)
 
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=2, column=0, sticky=tk.E)
-        self.widgets[2].grid(row=3, column=0, sticky=tk.E)
-        self.widgets[3].grid(row=4, column=0, sticky=tk.E)
-        self.widgets[4].grid(row=5, column=0, sticky=tk.E)
-        self.widgets[5].grid(row=6, column=0, sticky=tk.E)
-        self.widgets[6].grid(row=7, column=0, sticky=tk.E)
-        self.widgets[7].grid(row=8, column=0, sticky=tk.E)
-        self.widgets[8].grid(row=9, column=0, sticky=tk.E)
-        self.widgets[9].grid(row=10, column=0, sticky=tk.E)
-        self.widgets[10].grid(row=11, column=0, sticky=tk.E)
-        self.widgets[11].grid(row=12, column=0, sticky=tk.E)
-        self.widgets[12].grid(row=13, column=0, sticky=tk.E)
-        self.widgets[13].grid(row=14, column=0, sticky=tk.E)
-        self.widgets[14].grid(row=15, column=0, sticky=tk.E)
-        self.widgets[15].grid(row=16, column=0, sticky=tk.E)
-        self.widgets[16].grid(row=17, column=0, sticky=tk.E)
-        self.widgets[17].grid(row=18, column=0, sticky=tk.E)
+        for index, i in enumerate(self.widgets):
+            i[0].grid(row=index + 1, column=0, sticky=tk.W)
+            i[1].grid(row=index + 1, column=1, sticky=tk.W)
 
 
 # Displays characters current gold
@@ -290,15 +304,28 @@ class HitPointsCard(LevelTwoCard):
             'Temporary': 'temporary_hp'}
 
     def create_widgets(self, key, values):
-        return LabelEntryPair(self, entry_type=NumberEntry, label_text=key, attr=values)
+        label = LevelTwoLabel(self, text=key)
+        entry = NumberEntry(self, attr=values)
+        return [label, entry]
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
+        self.frame_label.grid(row=4, column=0, columnspan=3)
+        self.frame_label.config(font=(None, 17))
 
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=2, column=0, sticky=tk.E)
-        self.widgets[2].grid(row=3, column=0, sticky=tk.E)
+        self.widgets[0][0].grid(row=1, column=0)
+        self.widgets[0][1].grid(row=0, column=0)
+        self.widgets[0][1].config(font=(None, 18))
+        self.widgets[1][0].grid(row=1, column=1)
+        self.widgets[1][1].grid(row=0, column=1)
+        self.widgets[1][1].config(font=(None, 18))
+        self.widgets[2][0].grid(row=1, column=2)
+        self.widgets[2][1].grid(row=0, column=2)
+        self.widgets[2][1].config(font=(None, 18))
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
 
 
 class HitDiceCard(LevelTwoCard):
@@ -306,45 +333,54 @@ class HitDiceCard(LevelTwoCard):
             'Current': 'current_dice'}
 
     def create_widgets(self, key, values):
-        return LabelEntryPair(self, entry_type=NumberEntry, label_text=key, attr=values)
+        label = LevelTwoLabel(self, text=key)
+        entry = NumberEntry(self, attr=values)
+        return [label, entry]
 
     def grid_items(self):
         self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
+        self.frame_label.grid(row=2, column=0, columnspan=2)
 
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=2, column=0, sticky=tk.E)
+        self.widgets[0][0].grid(row=0, column=0)
+        self.widgets[0][1].grid(row=0, column=1)
+        self.widgets[1][0].grid(row=1, column=0)
+        self.widgets[1][1].grid(row=1, column=1)
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
 
 
-class DeathSavesCard(LevelTwoCard):
+class DeathSavesCard(HitDiceCard):
     DICT = {'Successes': 'success_throws',
             'Failures': 'fail_throws'}
 
-    def create_widgets(self, key, values):
-        return LabelEntryPair(self, entry_type=NumberEntry, label_text=key, attr=values)
 
-    def grid_items(self):
-        self.inner_grid()
-        self.frame_label.grid(row=0, column=0)
-
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=2, column=0, sticky=tk.E)
-
-
-class TopCombatCard(LevelTwoCard):
-    DICT = {'Armor Class': 'armor_class',
-            'Initiative': 'initiative',
-            'Speed': 'speed'}
+class CombatStatCard(LevelTwoCard):
+    DICT = {}
 
     def create_widgets(self, key, values):
-        return LabelEntryPair(self, label_text=key, attr=values, entry_type=NumberEntry, style='top combat')
+        label = LevelTwoLabel(self, text=key)
+        entry = NumberEntry(self, attr=values)
+        return [label, entry]
 
     def grid_items(self):
-        self.inner_grid()
+        self.widgets[0][0].config(font=(None, 17))
+        self.widgets[0][1].config(font=(None, 17))
 
-        self.widgets[0].grid(row=1, column=0, sticky=tk.E)
-        self.widgets[1].grid(row=1, column=1, sticky=tk.E)
-        self.widgets[2].grid(row=1, column=2, sticky=tk.E)
+        self.widgets[0][0].grid(row=1, column=0)
+        self.widgets[0][1].grid(row=0, column=0)
+
+
+class ACCard(CombatStatCard):
+    DICT = {'Armor\nClass': 'armor_class'}
+
+
+class InitCard(CombatStatCard):
+    DICT = {'Initiative': 'initiative'}
+
+
+class SpeedCard(CombatStatCard):
+    DICT = {'Speed': 'speed'}
 
 
 class SelectMenu(LevelTwoCard, ABC):
@@ -405,17 +441,17 @@ class MiscItemsMenuCard(SelectMenu):
         self.entries.append(None)
         self.change_list('personality', 2)
 
-        self.widgets[0].grid(row=0, column=0)
+        self.widgets[0].grid(row=0, column=0, sticky=tk.N)
         self.widgets[1].grid(row=0, column=1)
-        self.widgets[2].grid(row=0, column=0, sticky=tk.N+tk.EW)
-        self.widgets[3].grid(row=1, column=0, sticky=tk.N+tk.EW)
-        self.widgets[4].grid(row=2, column=0, sticky=tk.N+tk.EW)
-        self.widgets[5].grid(row=3, column=0, sticky=tk.N+tk.EW)
-        self.widgets[6].grid(row=4, column=0, sticky=tk.N+tk.EW)
-        self.widgets[7].grid(row=5, column=0, sticky=tk.N+tk.EW)
-        self.widgets[8].grid(row=6, column=0, sticky=tk.N+tk.EW)
-        self.widgets[9].grid(row=7, column=0, sticky=tk.N+tk.EW)
-        self.widgets[10].grid(row=8, column=0, sticky=tk.N+tk.EW)
+        self.widgets[2].grid(row=0, column=0, sticky=tk.N + tk.EW)
+        self.widgets[3].grid(row=1, column=0, sticky=tk.N + tk.EW)
+        self.widgets[4].grid(row=2, column=0, sticky=tk.N + tk.EW)
+        self.widgets[5].grid(row=3, column=0, sticky=tk.N + tk.EW)
+        self.widgets[6].grid(row=4, column=0, sticky=tk.N + tk.EW)
+        self.widgets[7].grid(row=5, column=0, sticky=tk.N + tk.EW)
+        self.widgets[8].grid(row=6, column=0, sticky=tk.N + tk.EW)
+        self.widgets[9].grid(row=7, column=0, sticky=tk.N + tk.EW)
+        self.widgets[10].grid(row=8, column=0, sticky=tk.N + tk.EW)
 
     def open_item(self, selection):
         if not character.open_item:
@@ -572,7 +608,7 @@ class SpellSlots(LevelTwoCard):
             return ButtonHolder(self)
         else:
             label = LevelTwoLabel(self.widgets[0], text=key)
-            entries = SpellSlotDisplay(self.widgets[0], f'{values}_max', f'{values}_used' )
+            entries = SpellSlotDisplay(self.widgets[0], f'{values}_max', f'{values}_used')
             return [label, entries]
 
     def grid_items(self):
@@ -580,23 +616,23 @@ class SpellSlots(LevelTwoCard):
         self.frame_label.grid(row=0, column=0, columnspan=3)
 
         self.widgets[0].grid(row=1, column=0)
-        self.widgets[1][0].grid(row=2, column=0)
-        self.widgets[1][1].grid(row=2, column=1)
-        self.widgets[2][0].grid(row=3, column=0)
-        self.widgets[2][1].grid(row=3, column=1)
-        self.widgets[3][0].grid(row=4, column=0)
-        self.widgets[3][1].grid(row=4, column=1)
-        self.widgets[4][0].grid(row=5, column=0)
-        self.widgets[4][1].grid(row=5, column=1)
-        self.widgets[5][0].grid(row=6, column=0)
-        self.widgets[5][1].grid(row=6, column=1)
-        self.widgets[6][0].grid(row=7, column=0)
-        self.widgets[6][1].grid(row=7, column=1)
-        self.widgets[7][0].grid(row=8, column=0)
-        self.widgets[7][1].grid(row=8, column=1)
-        self.widgets[8][0].grid(row=9, column=0)
-        self.widgets[8][1].grid(row=9, column=1)
-        self.widgets[9][0].grid(row=10, column=0)
+        self.widgets[1][0].grid(row=2, column=0, sticky=tk.W)
+        self.widgets[1][1].grid(row=2, column=1, sticky=tk.W)
+        self.widgets[2][0].grid(row=3, column=0, sticky=tk.W)
+        self.widgets[2][1].grid(row=3, column=1, sticky=tk.W)
+        self.widgets[3][0].grid(row=4, column=0, sticky=tk.W)
+        self.widgets[3][1].grid(row=4, column=1, sticky=tk.W)
+        self.widgets[4][0].grid(row=5, column=0, sticky=tk.W)
+        self.widgets[4][1].grid(row=5, column=1, sticky=tk.W)
+        self.widgets[5][0].grid(row=6, column=0, sticky=tk.W)
+        self.widgets[5][1].grid(row=6, column=1, sticky=tk.W)
+        self.widgets[6][0].grid(row=7, column=0, sticky=tk.W)
+        self.widgets[6][1].grid(row=7, column=1, sticky=tk.W)
+        self.widgets[7][0].grid(row=8, column=0, sticky=tk.W)
+        self.widgets[7][1].grid(row=8, column=1, sticky=tk.W)
+        self.widgets[8][0].grid(row=9, column=0, sticky=tk.W)
+        self.widgets[8][1].grid(row=9, column=1, sticky=tk.W)
+        self.widgets[9][0].grid(row=10, column=0, sticky=tk.W)
         self.widgets[9][1].grid(row=10, column=1)
 
 

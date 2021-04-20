@@ -7,6 +7,7 @@ import frontend as fe
 class App:
     def __init__(self):
         self.root = tk.Tk()
+        self.root.config(bg='#18191A')
         self.main_window = fe.MainWindow(self.root)
         self.create_menu_bar()
 

@@ -74,9 +74,9 @@ class SpellSlotDisplay(FrameTemplate, tk.Frame):
 
     def create_widgets(self, key, values):
         if values == 'max':
-            return SSNumberEntry(self, self.max_ss)
+            return NumberEntry(self, self.max_ss)
         elif values == 'used':
-            return SSNumberEntry(self, self.current_ss)
+            return NumberEntry(self, self.current_ss)
 
     def grid_items(self):
         self.widgets[0].grid(row=0, column=0)
@@ -111,10 +111,11 @@ class TopStatFrame(CustomHolderFrame):
 class LabelEntryPair(CustomHolderFrame):
     def __init__(self, parent, attr, entry_type, label_text, style=None, *args, **kwargs):
         CustomHolderFrame.__init__(self, parent, *args, **kwargs)
+        self.config(bg=LEVELTWO)
 
         self.entry_type = entry_type
         self.entry = entry_type(self)
-        self.label = tk.Label(self, text=label_text)
+        self.label = LevelTwoLabel(self, text=label_text)
         self.mod_label = None
         self.char_attr = attr
         self.style = style
@@ -170,33 +171,20 @@ class LabelEntryPair(CustomHolderFrame):
         character.save_single_attr(self.char_attr, self.entry.get())
 
 
-class CheckLabelPair(CustomHolderFrame):
-    def __init__(self, parent, attr1, attr2, label_text, *args, **kwargs):
-        CustomHolderFrame.__init__(self, parent, *args, **kwargs)
+class MiscItemPair(LabelEntryPair):
 
-        self.char_attr = attr1
-        self.prof_attr = attr2
-        self.var = tk.IntVar()
-        self.prof = False
+    def set_entry(self, value=''):
+        self.entry.reset()
+        self.entry.insert(tk.END, value)
 
-        self.check_proficiency()
+    def get_entry(self):
+        return self.entry.get_entry()
 
-        self.check = CustomCheckbutton(self, variable=self.var, text=label_text)
-        self.mod_label = ModLabel(self, ability=self.char_attr, prof=self.prof)
-        self.mod_label.set_label()
-
-    def check_proficiency(self):
-        prof = character.get_single_attr(self.prof_attr)
-        if prof == 1:
-            self.var.set(1)
-            self.prof = True
-
-    def grid_items(self):
-        self.check.grid(row=0, column=0)
-        self.mod_label.grid(row=0, column=1)
+    def reset(self):
+        self.entry.reset()
 
     def save(self):
-        character.save_single_attr(self.prof_attr, self.var.get())
+        pass
 
 
 class CustomLabel(ABC, tk.Label):
@@ -210,14 +198,22 @@ class CustomLabel(ABC, tk.Label):
         pass
 
 
+class LevelOneLabel(CustomLabel):
+    def __init__(self, parent, *args, **kwargs):
+        CustomLabel.__init__(self, parent, *args, **kwargs)
+        self.config(bg=LEVELONE, fg=PRIMARY_TEXT)
+
+
 class LevelTwoLabel(CustomLabel):
     def __init__(self, parent, *args, **kwargs):
         CustomLabel.__init__(self, parent, *args, **kwargs)
+        self.config(bg=LEVELTWO, fg=PRIMARY_TEXT, font=(None, FONT1_SIZE))
 
 
 class ModLabel(CustomLabel):
     def __init__(self, parent, ability, prof=False, *args, **kwargs):
         CustomLabel.__init__(self, parent, *args, **kwargs)
+        self.config(bg=LEVELTWO, fg=PRIMARY_TEXT)
 
         self.ability_attr = ability
         self.prof = prof
@@ -237,6 +233,40 @@ class ModLabel(CustomLabel):
         self.config(text=str(self.calculate_mod()))
 
 
+class SavingMod(CustomLabel):
+    def __init__(self, parent, ability, attr=None, prof=False, *args, **kwargs):
+        CustomLabel.__init__(self, parent, *args, **kwargs)
+        self.config(bg=LEVELTWO, fg=PRIMARY_TEXT, font=(None, 12))
+
+        self.ability = ability
+        self.char_attr = attr
+        self.prof = attr
+
+        self.set_label()
+
+    def calculate_mod(self):
+        score = character.get_single_attr(self.ability)
+        mod = sf.calculate_mod(score)
+        return self.check_proficiency(mod)
+
+    def check_proficiency(self, mod):
+        if self.prof:
+            prof = character.get_single_attr(self.char_attr)
+            if prof == 1:
+                mod += character.get_single_attr('proficiency')
+                return mod
+        return mod
+
+    def set_label(self):
+        self.config(text=str(self.calculate_mod()))
+
+
+class AbilitiesMod(SavingMod):
+    def __init__(self, parent, ability, attr=None, prof=False, *args, **kwargs):
+        SavingMod.__init__(self, parent, ability, *args, **kwargs)
+        self.config(font=(None, 18))
+
+
 class CustomEntry(ABC, tk.Entry):
     def __init__(self, parent, *args, **kwargs):
         tk.Entry.__init__(self, parent, *args, **kwargs)
@@ -249,12 +279,22 @@ class CustomEntry(ABC, tk.Entry):
     def check_entry_len(self):
         pass
 
+    def grid_items(self):
+        pass
+
+    def save(self):
+        pass
+
 
 class NumberEntry(CustomEntry):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, attr=None, *args, **kwargs):
         CustomEntry.__init__(self, parent, *args, **kwargs)
+        self.attr = attr
 
         self.config(width=4, justify=tk.CENTER)
+
+        if self.attr:
+            self.set_entry()
 
     def check_entry_type(self):
         txt = self.get()
@@ -264,29 +304,22 @@ class NumberEntry(CustomEntry):
         if len(self.get()) > 4:
             return 'Error, too many digits'
 
-
-class SSNumberEntry(NumberEntry):
-    def __init__(self, parent, spell_slot, *args, **kwargs):
-        NumberEntry.__init__(self, parent, *args, **kwargs)
-        self.spell_slot = spell_slot
-
-        self.set_entry()
-
     def set_entry(self):
-        self.insert(0, character.get_single_attr(self.spell_slot))
+        self.insert(0, character.get_single_attr(self.attr))
 
     def save(self):
-        character.save_single_attr(self.spell_slot, self.get())
-
-    def grid_items(self):
-        pass
+        character.save_single_attr(self.attr, self.get())
 
 
 class TextEntry(CustomEntry):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, attr=None, *args, **kwargs):
         CustomEntry.__init__(self, parent, *args, **kwargs)
 
         self.config(width=15, justify=tk.CENTER)
+        self.attr = attr
+
+        if self.attr:
+            self.set_entry()
 
     def check_entry_type(self):
         return True
@@ -298,13 +331,68 @@ class TextEntry(CustomEntry):
     def get_entry(self):
         return self.get()
 
+    def set_entry(self):
+        self.insert(0, character.get_single_attr(self.attr))
+
+    def save(self):
+        character.save_single_attr(self.attr, self.get())
+
+    def reset(self):
+        self.delete(0, tk.END)
+
+
+class ItemTextEntry(CustomEntry):
+    def __init__(self, parent, attr=None, *args, **kwargs):
+        CustomEntry.__init__(self, parent, *args, **kwargs)
+
+        self.config(width=15, justify=tk.CENTER)
+        self.attr = attr
+
+        if self.attr:
+            self.set_entry()
+
+    def check_entry_type(self):
+        return True
+
+    def check_entry_len(self):
+        if len(self.get()) > 15:
+            return 'Error, too long'
+
+    def get_entry(self):
+        return self.get()
+
+    def set_entry(self, entry_text=""):
+        self.insert(0, entry_text)
+
+    def save(self):
+        pass
+
     def reset(self):
         self.delete(0, tk.END)
 
 
 class CustomCheckbutton(tk.Checkbutton):
-    def __init__(self, parent, *args, **kwargs):
-        tk.Checkbutton.__init__(self, parent, *args, **kwargs)
+    def __init__(self, parent, attr, *args, **kwargs):
+        self.var = tk.IntVar()
+        tk.Checkbutton.__init__(self, parent, variable=self.var, *args, **kwargs)
+        self.config(bg=LEVELTWO, activebackground=LEVELTWO,
+                    fg=SECONDARY_TEXT, activeforeground=SECONDARY_TEXT,
+                    font=(None, FONT1_SIZE))
+
+        self.char_attr = attr
+
+        self.check_proficiency()
+
+    def check_proficiency(self):
+        prof = character.get_single_attr(self.char_attr)
+        if prof == 1:
+            self.var.set(1)
+
+    def grid_items(self):
+        pass
+
+    def save(self):
+        character.save_single_attr(self.char_attr, self.var.get())
 
 
 class CustomTextbox(tk.Text):
@@ -312,24 +400,17 @@ class CustomTextbox(tk.Text):
         tk.Text.__init__(self, parent, *args, **kwargs)
         self.config(width=50, height=13, wrap=tk.WORD)
 
+    def set_entry(self, entry_text=''):
+        self.insert('1.0', entry_text)
+
     def get_entry(self):
         return self.get('1.0', 'end-1c')
 
     def reset(self):
         self.delete(1.0, tk.END)
 
-
-class MiscItemPair(LabelEntryPair):
-
-    def set_entry(self, value=''):
-        self.entry.reset()
-        self.entry.insert(tk.END, value)
-
-    def get_entry(self):
-        return self.entry.get_entry()
-
-    def reset(self):
-        self.entry.reset()
+    def grid_items(self):
+        pass
 
     def save(self):
         pass
@@ -338,6 +419,8 @@ class MiscItemPair(LabelEntryPair):
 class CustomButton(ABC, tk.Button):
     def __init__(self, parent, *args, **kwargs):
         tk.Button.__init__(self, parent, *args, **kwargs)
+        self.config(font=(None, 12), fg=PRIMARY_TEXT, bg=BUTTON_HIGHLIGHT,
+                    activebackground=BUTTON, activeforeground=PRIMARY_TEXT)
 
     def grid_items(self):
         pass
@@ -392,7 +475,7 @@ class CustomListbox(ABC, tk.Listbox):
 class MiscListbox(CustomListbox):
     def __init__(self, parent, *args, **kwargs):
         CustomListbox.__init__(self, parent, *args, **kwargs)
-        self.config(width=20, height=12, font=(None, 14))
+        self.config(width=20, height=20, font=(None, 14))
 
     def change_list(self, list_type):
         self.clear()
@@ -428,6 +511,9 @@ class SpellsListbox(CustomListbox):
 
 
 class ButtonHolder(CustomHolderFrame):
+    def __init__(self, parent, *args, **kwargs):
+        CustomHolderFrame.__init__(self, parent, *args, **kwargs)
+        self.config(bg=LEVELTWO)
     def save(self):
         pass
 
@@ -435,205 +521,4 @@ class ButtonHolder(CustomHolderFrame):
         pass
 
 
-class ItemDisplay(FrameTemplate, tk.Frame, ABC):
-    DICT = {}
 
-    def __init__(self, parent, item=None, list_type=None, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-        FrameTemplate.__init__(self, *args, **kwargs)
-        self.item = item
-        self.parent = parent
-        self.list_type = list_type
-
-        if self.item:
-            self.set_widgets()
-
-    @abstractmethod
-    def set_widgets(self):
-        pass
-
-    @abstractmethod
-    def delete(self):
-        pass
-
-    def create_widgets(self, key, values):
-        if values in ('name', 'atk_bns', 'damage', 'casting_time', 'range', 'components', 'duration', 'school'):
-            return MiscItemPair(self, attr=None, entry_type=TextEntry, label_text=key)
-        elif values == 'desc':
-            return MiscItemPair(self, attr=None, entry_type=CustomTextbox, label_text=key, style='textbox')
-        elif values == 'save_btn':
-            return MiscButton(self, text=key, command=self.save)
-        elif values == 'delete':
-            return MiscButton(self, text=key, command=self.delete)
-
-
-class MiscItemDisplay(ItemDisplay):
-    DICT = {'Name': 'name',
-            'Description': 'desc',
-            'Save Changes': 'save_btn',
-            'Delete': 'delete'}
-
-    def set_widgets(self):
-        self.widgets[0].set_entry(self.item['name'])
-        self.widgets[1].set_entry(self.item['description'])
-
-    def grid_items(self):
-        self.inner_grid()
-
-        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
-        self.widgets[1].grid(row=1, column=0, columnspan=3)
-        self.widgets[2].grid(row=0, column=1)
-        self.widgets[3].grid(row=0, column=2)
-
-    def save(self):
-        if self.item:
-            self.item['name'] = self.widgets[0].get_entry()
-            self.item['description'] = self.widgets[1].get_entry()
-            character.misc_items.update(self.item)
-        else:
-            character.misc_items.add_item(name=self.widgets[0].get_entry(),
-                                          description=self.widgets[1].get_entry(),
-                                          list_type=self.list_type)
-            self.parent.on_exit()
-
-    def delete(self):
-        character.misc_items.delete(self.item['id'])
-        self.parent.on_exit()
-
-    def add_mode(self):
-        self.item = None
-        for i in range(0, 2):
-            self.widgets[i].reset()
-        self.widgets[3].grid_forget()
-
-    def item_mode(self, item):
-        self.item = item
-        self.set_widgets()
-        self.widgets[3].grid(row=0, column=2)
-
-
-class WeaponItemDisplay(ItemDisplay):
-    DICT = {'Name': 'name',
-            'Attack Bonus': 'atk_bns',
-            'Damage': 'damage',
-            'Description': 'desc',
-            'Save Changes': 'save_btn',
-            'Delete': 'delete'}
-
-    def set_widgets(self):
-        self.widgets[0].set_entry(self.item['name'])
-        self.widgets[1].set_entry(self.item['atk_bns'])
-        self.widgets[2].set_entry(self.item['damage'])
-        self.widgets[3].set_entry(self.item['description'])
-
-    def grid_items(self):
-        self.inner_grid()
-
-        self.widgets[0].grid(row=0, column=0, sticky=tk.W)
-        self.widgets[1].grid(row=1, column=0, sticky=tk.W)
-        self.widgets[2].grid(row=2, column=0, sticky=tk.W)
-        self.widgets[3].grid(row=3, column=0, columnspan=3)
-        self.widgets[4].grid(row=0, column=1)
-
-    def save(self):
-        if self.item:
-            self.item['name'] = self.widgets[0].get_entry()
-            self.item['atk_bns'] = self.widgets[1].get_entry()
-            self.item['damage'] = self.widgets[2].get_entry()
-            self.item['description'] = self.widgets[3].get_entry()
-            character.weapon_items.update(self.item)
-
-        else:
-            character.weapon_items.add_item(name=self.widgets[0].get_entry(),
-                                            atk_bns=self.widgets[1].get_entry(),
-                                            damage=self.widgets[2].get_entry(),
-                                            description=self.widgets[3].get_entry(),
-                                            list_type=self.parent.widgets[0].entries[0])
-        self.parent.widgets[0].refresh()
-
-    def delete(self):
-        character.weapon_items.delete(self.item['id'])
-        self.parent.widgets[0].refresh()
-        self.add_mode()
-
-    def add_mode(self):
-        self.item = None
-        for i in range(0, 4):
-            self.widgets[i].reset()
-        self.widgets[5].grid_forget()
-
-    def item_mode(self, item):
-        self.item = item
-        self.set_widgets()
-        self.widgets[5].grid(row=1, column=1)
-
-
-class SpellItemDisplay(ItemDisplay):
-    DICT = {'Name': 'name',
-            'Casting Time': 'casting_time',
-            'Range': 'range',
-            'Components': 'components',
-            'Duration': 'duration',
-            'School': 'school',
-            'Description': 'desc',
-            'Save Changes': 'save_btn',
-            'Delete': 'delete'}
-
-    def set_widgets(self):
-        self.widgets[0].set_entry(self.item['name'])
-        self.widgets[1].set_entry(self.item['casting_time'])
-        self.widgets[2].set_entry(self.item['range'])
-        self.widgets[3].set_entry(self.item['components'])
-        self.widgets[4].set_entry(self.item['duration'])
-        self.widgets[5].set_entry(self.item['school'])
-        self.widgets[6].set_entry(self.item['description'])
-
-    def grid_items(self):
-        self.inner_grid()
-
-        self.widgets[0].grid(row=0, column=0, sticky=tk.EW)
-        self.widgets[1].grid(row=1, column=0, sticky=tk.EW)
-        self.widgets[2].grid(row=2, column=0, sticky=tk.EW)
-        self.widgets[3].grid(row=0, column=1, sticky=tk.EW)
-        self.widgets[4].grid(row=1, column=1, sticky=tk.EW)
-        self.widgets[5].grid(row=2, column=1, sticky=tk.EW)
-        self.widgets[6].grid(row=3, column=0, columnspan=3)
-        self.widgets[7].grid(row=0, column=2)
-
-    def delete(self):
-        character.spell_items.delete(self.item['id'])
-        self.parent.widgets[0].refresh()
-        self.add_mode()
-
-    def add_mode(self):
-        self.item = None
-        for i in range(0, 7):
-            self.widgets[i].reset()
-        self.widgets[8].grid_forget()
-
-    def item_mode(self, item):
-        self.item = item
-        self.set_widgets()
-        self.widgets[8].grid(row=1, column=2)
-
-    def save(self):
-        if self.item:
-            self.item['name'] = self.widgets[0].get_entry()
-            self.item['casting_time'] = self.widgets[1].get_entry()
-            self.item['range'] = self.widgets[2].get_entry()
-            self.item['components'] = self.widgets[3].get_entry()
-            self.item['duration'] = self.widgets[4].get_entry()
-            self.item['school'] = self.widgets[5].get_entry()
-            self.item['description'] = self.widgets[6].get_entry()
-            character.spell_items.update(self.item)
-
-        else:
-            character.spell_items.add_item(name=self.widgets[0].get_entry(),
-                                           casting_time=self.widgets[1].get_entry(),
-                                           spell_range=self.widgets[2].get_entry(),
-                                           components=self.widgets[3].get_entry(),
-                                           duration=self.widgets[4].get_entry(),
-                                           school=self.widgets[5].get_entry(),
-                                           description=self.widgets[6].get_entry(),
-                                           level=self.parent.widgets[0].entries[0])
-        self.parent.widgets[0].refresh()

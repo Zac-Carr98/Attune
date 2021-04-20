@@ -1,10 +1,12 @@
 import tkinter as tk
 from static import frames
+from static.settings import *
 
 
 class MainWindow(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
+        self.config(bg=BASE)
 
         self.basic_info_card = frames.BasicInfoCard(self, 'Basic Info')
         self.basic_combat_frame = frames.BasicCombatCard(self, 'Combat')
